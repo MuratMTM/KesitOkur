@@ -28,7 +28,7 @@ struct IntroView: View {
                     }
                     .shadow(radius: /*@START_MENU_TOKEN@*/20/*@END_MENU_TOKEN@*/)
                 
-                Text("kesitOkur")
+                Text("KesitOkur")
                     .fontWeight(.bold)
                     .italic()
                     .font(.largeTitle)
