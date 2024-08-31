@@ -7,20 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		254B2A352C828EA10000E736 /* MainScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 254B2A342C828EA10000E736 /* MainScreenView.swift */; };
 		2571B06D2BA67F5C00E41D93 /* KesitOkurApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2571B06C2BA67F5C00E41D93 /* KesitOkurApp.swift */; };
 		2571B06F2BA67F5C00E41D93 /* IntroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2571B06E2BA67F5C00E41D93 /* IntroView.swift */; };
 		2571B0712BA67F5E00E41D93 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2571B0702BA67F5E00E41D93 /* Assets.xcassets */; };
 		2571B0742BA67F5E00E41D93 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2571B0732BA67F5E00E41D93 /* Preview Assets.xcassets */; };
+		25B8209E2C7BA3BD001C8954 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B8209D2C7BA3BD001C8954 /* BookListView.swift */; };
+		25B820A02C7BA593001C8954 /* BookModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B8209F2C7BA593001C8954 /* BookModel.swift */; };
+		25B820A22C7BA693001C8954 /* BookList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B820A12C7BA693001C8954 /* BookList.swift */; };
 		25D5E3742BAB719E00042FF2 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D5E3732BAB719E00042FF2 /* WelcomeView.swift */; };
 		25D5E3762BAB736B00042FF2 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D5E3752BAB736B00042FF2 /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		254B2A342C828EA10000E736 /* MainScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreenView.swift; sourceTree = "<group>"; };
 		2571B0692BA67F5C00E41D93 /* KesitOkur.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KesitOkur.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2571B06C2BA67F5C00E41D93 /* KesitOkurApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KesitOkurApp.swift; sourceTree = "<group>"; };
 		2571B06E2BA67F5C00E41D93 /* IntroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroView.swift; sourceTree = "<group>"; };
 		2571B0702BA67F5E00E41D93 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2571B0732BA67F5E00E41D93 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		25B8209D2C7BA3BD001C8954 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
+		25B8209F2C7BA593001C8954 /* BookModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModel.swift; sourceTree = "<group>"; };
+		25B820A12C7BA693001C8954 /* BookList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookList.swift; sourceTree = "<group>"; };
 		25D5E3732BAB719E00042FF2 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		25D5E3752BAB736B00042FF2 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,7 +64,11 @@
 			isa = PBXGroup;
 			children = (
 				2571B06C2BA67F5C00E41D93 /* KesitOkurApp.swift */,
+				25B8209D2C7BA3BD001C8954 /* BookListView.swift */,
+				25B820A12C7BA693001C8954 /* BookList.swift */,
 				25D5E3732BAB719E00042FF2 /* WelcomeView.swift */,
+				254B2A342C828EA10000E736 /* MainScreenView.swift */,
+				25B8209F2C7BA593001C8954 /* BookModel.swift */,
 				25D5E3752BAB736B00042FF2 /* OnboardingView.swift */,
 				2571B06E2BA67F5C00E41D93 /* IntroView.swift */,
 				2571B0702BA67F5E00E41D93 /* Assets.xcassets */,
@@ -145,8 +157,12 @@
 			files = (
 				2571B06F2BA67F5C00E41D93 /* IntroView.swift in Sources */,
 				25D5E3762BAB736B00042FF2 /* OnboardingView.swift in Sources */,
+				25B820A02C7BA593001C8954 /* BookModel.swift in Sources */,
+				25B8209E2C7BA3BD001C8954 /* BookListView.swift in Sources */,
+				25B820A22C7BA693001C8954 /* BookList.swift in Sources */,
 				25D5E3742BAB719E00042FF2 /* WelcomeView.swift in Sources */,
 				2571B06D2BA67F5C00E41D93 /* KesitOkurApp.swift in Sources */,
+				254B2A352C828EA10000E736 /* MainScreenView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
