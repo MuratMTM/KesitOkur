@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import Firebase
+
+
+
 
 struct Book: Identifiable, Decodable {
     var id = UUID()
@@ -18,29 +22,58 @@ struct Book: Identifiable, Decodable {
     let description: String
     
     
+    func loadJSON() ->[Book]? {
+        guard let url = Bundle.main.url(forResource: "kesitokur-app-books", withExtension: "json")
+                else {
+                    print("JSON dosyası bulunamadı!")
+                    return nil
+                }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let books = try decoder.decode([Book].self, from: data)
+            return books
+        } catch{
+            print("JSON dosyası bulunamadı!: \(error)")
+            return nil
+        }
+    }
+    
+    func addBooksToFirestore(books: [Book]) {
+        let db = Firestore.firestore()
+
+        for book in books {
+            var ref: DocumentReference? = nil
+            ref = db.collection("books").addDocument(data: [
+                "id": book.id,
+                "bookCover": book.bookCover,
+                "bookName": book.bookName,
+                "authorName": book.authorName,
+                "publishYear": book.publishYear,
+                "edition": book.edition,
+                "pages" : book.edition ,
+                "description" : book.description ,
+              
+                
+            ]) { err in
+                if let err = err {
+                    print("Error adding document: \(err)")
+                } else {
+                    print("Document added with ID: \(ref!.documentID)")
+                }
+            }
+        }
+    }
+    
+   
 }
 
-func getBooks() async throws -> Book {
-    //continue later...
-    let endpoint: String = ""
-    guard let url = URL(string: endpoint) else {throw BookError.invalidURl}
-    
-    let (data, response) = try await URLSession.shared.data(from: url)
-    
-    guard let response = response as? HTTPURLResponse, response.statusCode == 200 else{
-        throw BookError.invalidResponse
-    }
-    do {
-        let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
-        return try decoder.decode(Book.self, from: data)
-    } catch  {
-        throw BookError.invalidData
-    }
-}
+
 
 enum BookError: Error {
     case invalidURl
     case invalidResponse
     case invalidData
+  
 }

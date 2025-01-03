@@ -17,9 +17,9 @@ struct OnboardingView: View {
             //buttons
             VStack{
                 Spacer()
-                bottomButton( logo: SignInLogo().withGoogle,text:SignInLogo().googleText )
-                bottomButton(logo: SignInLogo().withEmail,text:SignInLogo().emailText)
-                bottomButton(logo: SignInLogo().withApple,text:SignInLogo().appleText)
+                bottomButton(text:SignInLogo().googleText ,logo: SignInLogo().withGoogle )
+                bottomButton(text:SignInLogo().emailText,logo: SignInLogo().withEmail)
+                bottomButton(text:SignInLogo().appleText,logo: SignInLogo().withApple)
                 
                 
             }.padding(30)
@@ -35,15 +35,17 @@ struct OnboardingView: View {
 
 
 extension OnboardingView {
-     func bottomButton(logo: Image, text: String) -> some View {
+     func bottomButton( text: String,logo: Image) -> some View {
         HStack {
-            Text("Sign in with")
-                .font(.headline)
-                .foregroundStyle(.gray)
+           
             
             Text(text)
                 .font(.headline)
                 .foregroundColor(.gray)
+            
+            Text("ile Giriş Yap")
+                .font(.headline)
+                .foregroundStyle(.gray)
                 
             
             logo
@@ -56,7 +58,7 @@ extension OnboardingView {
         .background(Color.white)
         .cornerRadius(30)
         .onTapGesture {
-            // Butona tıklama işlemi burada gerçekleşir
+            
         }
     }
 }
