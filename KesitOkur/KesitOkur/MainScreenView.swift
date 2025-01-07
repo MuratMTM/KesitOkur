@@ -2,19 +2,19 @@ import SwiftUI
 
 struct MainScreenView: View {
     let books: [Book] = BookList().books
-
+    
     var body: some View {
         NavigationView {
             ZStack {
-                // Arka plan RadialGradient - Sarıdan beyaza geçiş
+                // Arka Plan Renk Gradyanı
                 RadialGradient(
                     gradient: Gradient(colors: [.blue, .green]),
                     center: .bottom,
                     startRadius: 0,
                     endRadius: UIScreen.main.bounds.height
                 )
-                .ignoresSafeArea() // Arka planın tüm ekranı kaplamasını sağlarız
-                
+                .ignoresSafeArea()
+
                 // Kitaplar ve içerikler
                 ScrollView {
                     VStack(spacing: 20) {
@@ -24,13 +24,12 @@ struct MainScreenView: View {
                                     AsyncImage(url: URL(string: book.bookCover)) { image in
                                         image
                                             .resizable()
-                                            
                                             .frame(width: 75, height: 100)
                                     } placeholder: {
                                         ProgressView()
                                     }
-                                    .cornerRadius(10)
-
+                                    .cornerRadius(5)
+                                    
                                     VStack(alignment: .leading) {
                                         Text(book.bookName)
                                             .font(.headline)
@@ -56,14 +55,15 @@ struct MainScreenView: View {
                                             .italic()
                                             .padding(.bottom, 5)
                                             .foregroundStyle(.black)
+                                        
                                         Text(book.description)
                                             .font(.caption2)
                                             .lineLimit(3)
                                             .foregroundStyle(.black)
+                                            .multilineTextAlignment(.leading)
                                     }
                                 }
                                 .padding(1)
-                                
                                 .cornerRadius(10)
                                 .shadow(radius: 5)
                             }
@@ -72,6 +72,48 @@ struct MainScreenView: View {
                     .padding()
                 }
                 .navigationTitle("Kitaplarım")
+               
+                // TabView: Butonlar
+                VStack {
+                    
+                    TabView {
+                       
+                        // Profil Butonu
+                        NavigationLink(destination: ProfilePageView()) {
+                         
+                        }
+                        .tabItem {
+                            Image(systemName: "person.circle.fill")
+                            Text("Profil")
+                        }
+                        
+                        // Favoriler Butonu
+                        NavigationLink(destination: FavoritePageView()) {
+                            
+                        }
+                        .tabItem {
+                            Image(systemName: "star.fill")
+                            Text("Favoriler")
+                        }
+
+                        // Ayarlar Butonu
+                        NavigationLink(destination: SettingsPageView()) {
+                           
+                        }
+                        .tabItem {
+                            Image(systemName: "gearshape.fill")
+                            Text("Ayarlar")
+                        }
+                    }
+        
+                    .accentColor(.blue) // TabView renk ayarı
+                    .frame(height: 50)
+                    .background(Color.white)
+                    .cornerRadius(20)
+                    
+                    
+                }
+                    
             }
         }
     }
@@ -79,22 +121,19 @@ struct MainScreenView: View {
 
 struct BookDetailView: View {
     let book: Book
-
+    
     var body: some View {
         ZStack {
+            // Arka Plan Gradyanı
+            RadialGradient(
+                gradient: Gradient(colors: [.blue, .green]),
+                center: .bottom,
+                startRadius: 0,
+                endRadius: UIScreen.main.bounds.height
+            )
+            .ignoresSafeArea() // Arka planın tüm ekranı kaplamasını sağlarız
             
-          
-                // Arka plan RadialGradient - Sarıdan beyaza geçiş
-                RadialGradient(
-                    gradient: Gradient(colors: [.blue, .green]),
-                    center: .bottom,
-                    startRadius: 0,
-                    endRadius: UIScreen.main.bounds.height
-                )
-                .ignoresSafeArea() // Arka planın tüm ekranı kaplamasını sağlarız
             ScrollView {
-                
-                
                 VStack(alignment: .center, spacing: 12) {
                     AsyncImage(url: URL(string: book.bookCover)) { image in
                         image
@@ -129,3 +168,4 @@ struct BookDetailView: View {
 #Preview {
     MainScreenView()
 }
+

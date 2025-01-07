@@ -1,4 +1,4 @@
-kesitokur-app-books.json
+
 
 {
 	"books": [
@@ -41,8 +41,215 @@ kesitokur-app-books.json
 	  	"publishYear": "2024", 
 	 	"edition": "1", 
 	  	"pages": "382", 
-	 	"description": ""
-	}
+	 	"description": "ADRIAN NEWEY, DÜNYANIN EN ÖNDE GELEN FORMULA 1 TASARIMCISI, BRİTANYA'NIN TARTIŞMASIZ EN BÜYÜK MÜHENDİSLERİNDEN BİRİ VE BU ESER F1 SEVERLERİN, VE HATTA DİĞER MÜHENDİSLERİN, BAŞUCU KİTABI.BİR ARABA NASIL YAPILIR, ADRIAN'IN FORMULA 1'DEKİ 35 YILLIK RAKİPSİZ KARİYERİNİN ÖYKÜSÜNÜ, TASARLADIĞI ARABALARI, BİRLİKTE ÇALIŞTIĞI PİLOTLARI VE DAHİL OLDUĞU YARIŞLARI MERCEK ALTINA ALIYOR.F1’in deha ismi Adrian Newey; Mario Andretti, Nigel Mansell, Alain Prost, Ayrton Senna, Damon Hill, David Coulthard, Mika Hakkinen, Mark Webber, Sebastian Vettel ve Max Verstappen gibi isimler için araçlar tasarladı.Newey bu kitabında IndyCar yarışlarındaki ilk günlerinden başlayıp Formula 1'deki inanılmaz başarısına kadar geçen süreci keyifli bir dille okurla paylaşırken bir aracın gerçekte nasıl çalıştığını tüm ayrıntılarıyla bizlere aktarıyor."
+	},{
+        "id" : "5",
+        "bookCover" : "https://m.media-amazon.com/images/I/71PqRwWy1zL._SY466_.jpg",
+         "bookName": "İrade Terbiyesi",
+          "authorName": "Jules Payot",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "208",
+         "description": "Tembelliğe neden olan dış çevrenin tüm zararlı etkilerine karşı Payot'un önerisi şudur: İrade Eğitimi. Peki, bu irade eğitimi nedir ve nasıl yapılır? İşte Payot, yılların gözlemi ve deneyimi ile irade eğitimi savaşının her bir evresini ve yapılacakları tek tek anlatıyor. İrademiz ne kadar güçlü olursa hayatta sağlıklı, mutlu ve başarılı olma şansımız da bir o kadar artar."
+    },{
+        "id" : "6",
+        "bookCover" : "https://m.media-amazon.com/images/I/71pZmhIlE-L._SL1500_.jpg",
+         "bookName": "İrade Terbiyesi 2",
+          "authorName": "Jules Payot",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "192",
+         "description": "'İrade Terbiyesi' kitabım basıldıktan kısa bir süre sonra seçkin bir profesöre, öğrenme aşığı büyük bir üstada uğradım. Bana, yaşadığı acımasız bir şokun sebebinin şahsım olduğunu itiraf etti. Hayatı boyunca ne kadar çok enerjisini ziyan ettiğini kitabımı okurken geç de olsa gördüğünü söyledi. Altmış yaşındaydı ve bu geri dönülemez kaybın kendisine eziyet ettiğini ve yanlış yöntemlerin kurbanı olduğu için yaşadığı ıstırabı dindirecek hiçbir şey olmadığını anlattı.'İrade Terbiyesi' insanları öyle etkiledi ki birçok insan aynı bu profesör gibi hayatlarını yeniden düzene koymanın gerekliliğini anlamışlardı. Peki, düzenden sonra istikrar nasıl devam edecekti?'Bana bir dayanak noktası verin,' der Leibnitz, 'dünyayı yerinden oynatayım.'İşte elinizdeki bu kitap da size bu dayanak noktasını verecek ve dünyayı yerinden oynatmak isteyenler için istikrarlı bir çalışma hayatının nasıl kazanılacağını anlatacak."
+    },{
+        "id" : "7",
+        "bookCover" : "https://m.media-amazon.com/images/I/41fV2b3EDvL.jpg",
+         "bookName": "Paranın Psikolojisi",
+          "authorName": "Morgan Housel",
+          "publishYear": "2021",
+         "edition": "1",
+          "pages": "312",
+         "description": "Para konusunda başarılı olmak, mutlaka bilgiyle ve bilgili olmakla ilgili bir mesele değildir. Nasıl davrandığınızla ilgilidir. Üstelik davranışı öğretmek zordur; gerçekten zeki insanlara bile. Para yönetimi, yatırım ve kurumsal karar alma süreçlerinin genelde çok sayıda matematik hesabı içerdiği, ne yapacağınızı net bir biçimde ortaya koyan veriler ve formüller temelinde hareket etmeyi gerektirdiği düşünülür. Fakat gerçek dünyada insanlar finansla ilgili kararlar alırken sadece tablolara bakmaz. Finansal kararlar genellikle sofrada veya bir toplantı odasında, kişinin kendi hayat hikayesinin, ona özgü dünya görüşünün, egonun, kibirin, pazarlamanın ve bazı tuhaf motivasyon unsurlarının bir araya geldiği ortamlarda alınır. Ödüllü yazar Morgan Housel Paranın Psikolojisi'nde, insanların paraya ilişkin düşünce biçimlerini ele alan 19 kısa hikayeye yer veriyor ve hayatın en önemli yönlerinden biri olan para konusunu nasıl daha iyi anlayabileceğimize dair önemli dersler sunuyor."
+    },{
+        "id" : "8",
+        "bookCover" : "https://m.media-amazon.com/images/I/51+K-hv4c+L._SL1000_.jpg",
+         "bookName": "Geleceği Keşfedenler",
+          "authorName": "Walter Isaacson",
+          "publishYear": "2017",
+         "edition": "1",
+          "pages": "520",
+         "description": "GELECEĞİ KEŞFEDENLER, makinelerin insanların zihin dünyasına ortak olacağı bir geleceği hayal ederek yola çıkmış ve adım adım içinde yaşadığımız dijital çağı inşa etmiş dahilerin, yenilikçilerin, hacker'ların, girişimcilerin hikayesi. Kimdi bu insanlar? Kafaları nasıl çalışıyordu? Tavan arası ya da garajlarına kapanıp her şeyi tek başına yapmış dahilerden mi bahsediyoruz yoksa onları farklı yapan, yan yana gelip 'ortak deha' yaratma becerileri miydi? Isaacson'un benzersiz öykülendirme becerisi sayesinde sürükleyici bir roman tadında akan kitap, Lord Byron'ın yaklaşık iki yüzyıl önce yaşamış olmasına rağmen ilk yazılımcı kabul edilen kızı Ada Lovelace ile başlıyor ve Charles Babbage, Alan Turing, John von Neumann, Robert Noyce, Bill Gates, Steve Wozniak, Steve Jobs, Larry Page gibi pek çok etkileyici şahsiyetle devam ediyor.Geleceği Keşfedenler, yaratıcılığın ve dünyayı değiştiren fikirlerin hangi koşullar bir araya geldiğinde yeşerebildiğini ortaya koyan muazzam bir rehber."
+    },{
+        "id" : "9",
+        "bookCover" : "https://m.media-amazon.com/images/I/51m6I9iRjlL._SL1034_.jpg",
+         "bookName": "Süreyya Ciliv: Global İş Dünyasında Sıradışı Bir Lider",
+          "authorName": "Fırat Demirel",
+          "publishYear": "2023",
+         "edition": "1",
+          "pages": "360",
+         "description": "İş dünyasında pek çok lider görevini layığıyla yerine getirmek için gayret gösterir ancak kimileri vardır ki yıllar sonra dahi adından ve başarılarından söz ettirir. Peki, bu kişilerin farklı yönleri ve onları öne çıkaran özellikleri nelerdir? Çalışanlarıyla ekip olmayı bilen, önceliğine “insan”ı koyan bir lider nasıl yetişir? Ankara Fen Lisesi yıllarından ODTÜ’ye, Harvard Business School’dan Microsoft Türkiye’ye ve oradan da Turkcell’e uzanan sıradışı bir hikâye Süreyya Ciliv’inki… Göçlerle şekillenen, ülkenin içinde bulunduğu zorlu koşullara rağmen ilime sarılan, nihayetinde hayata ve yeniliklere karşı hiç dinmeyen merakı, geleceği şimdiden görebilen vizyonu ve teknolojiye inancıyla daima ileriyi hedefleyen bir yolculuk… Süreyya Ciliv hayatının görünen-görünmeyen, yanlış bilinen taraflarını, Vehbi Koç’tan burs isteyip de neden geri çevirdiğini, ABD’de cebinde 5 centle geçen günleri, girişimciliğe nasıl soyunduğunu, Bill Gates ile çalışmayı nasıl bıraktığını, Turkcell’deki ilk aylarında neden kovulduğunu ama yine de direnip nasıl harika bir takım oluşturduğunu, Turkcell’i nasıl global bir şirket hâline dönüştürdüğünü, en çok da Türkiye’nin teknoloji ve bilgi alanında ilerlemesi için nasıl çabaladığını tek tek anlattı; Fırat Demirel kaleme aldı. Türkiye’de mobil geniş bant ve fiber optik çağını başlatarak ülkenin teknolojik ve ekonomik kalkınmasına kalıcı bir iz bırakan, liderliğiyle binlerce kişiye rol model olan, Doğu’ya yatırımın ve sosyal sorumluluk projelerinin önünü açan; özetle bir kıvılcım olarak gittiği yurt dışından Türkiye’nin her köşesine sirayet eden bir alev olarak dönen bir lider... Eğer içinizde teknoloji ve bilimin ışığında, insanlara daha fazla değer vererek, gençlere ve öncelikle kendinize güvenerek dünya çapında işler yapma ateşi varsa bu kitap tam size göre..."
+    },{
+        "id" : "10",
+        "bookCover" : "https://m.media-amazon.com/images/I/515Ay9ZkY4L._SL1000_.jpg",
+         "bookName": "Derin Düşünce",
+          "authorName": "Garry Kasparov",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "328",
+         "description": "1997 yılında Garry Kasparov'un IBM süper bilgisayarı Deep Blue'yla yaptığı satranç maçı teknoloji tarihinde bir dönüm noktasıydı. Yapay zeka alanında yeni bir çağın başlangıcıydı: İlk kez bir makine, dünya şampiyonunu yenmişti.Bu anın gelmesi bir yüzyıldan fazla zaman almıştı ve bu kitapta Kasparov hikayeyi kendi ağzından ilk kez anlatıyor. Yorulmayan ve psikolojisi bozulmayan bir rakibe karşı tüm dünyanın gözü önünde oynayıp nasıl bir strateji geliştirdiğini anlatırken satranç dünyasında makine zekasının nasıl geliştiğinin tarihini de açıklıyor. Kasparov kendi eşsiz deneyimlerine dayanarak yapay zekanın geleceğini inceliyor. Her ne kadar birçok uzman, yapay zekanın işsizlik sorununa yol açacağına inansa da Kasparov insanlığın yapay zeka sayesinde daha da yükselebileceğine inanıyor. Derin Düşünce, kendi kariyerini bir makinenin önünde riske atan bir adam tarafından yazılmış bir teknoloji savunusu."
+    },{
+        "id" : "11",
+        "bookCover" : "https://m.media-amazon.com/images/I/51hsuinuycL._SL1000_.jpg",
+         "bookName": " Jeff Bezos ve Amazon Çağı",
+          "authorName": "Brad Stone",
+          "publishYear": "2017",
+         "edition": "1",
+          "pages": "472",
+         "description": "Amazoncom'un vizyon sahibi kurucusu Jeff Bezos sadece bir kitap satıcısı olmakla yetinmedi. Sınırsız ürün seçeneğiyle ve piyasayı karıştıracak kadar düşük fiyatların getirdiği karşı konulmaz cazibeyle Amazon'un 'her şeyin satıldığı dükkan' olmasını istedi. Bunu gerçekleştirmek için ise hiçbir zaman sarsılmayan amansız bir hırs ve gizlilik içeren kurumsal bir kimlik geliştirdi.Diğer elit teknoloji mucitleri -Jobs, Gates, Zuckerberg- ile karşılaştırılınca Bezos özel bir adam. Yeni pazarları yorulmak bilmeden takip etmesi, Amazon'a Kindle ve bulut bilişim gibi riskli yeni girişimlerde öncülük etmesi ve Henry Ford'un üretimde yarattığı devrime benzer şekilde perakendeciliğe bambaşka bir boyut kazandırması bunun kanıtı.Brad Stone hem eski hem de halihazırdaki Amazon çalışanlarına ve Bezos'un aile bireylerine ulaşarak Amazon'daki hayatın içine sızan ilk kitabı yazmayı başardı. Aradığın Her Şey, alışveriş yapma ve kitap okuma alışkanlıklarımızı sonsuza kadar değiştiren, adından daima söz ettirecek bir şirket olan Amazon'un nihai ve her şeyi açığa çıkaran biyografisi haline geldi."
+    },{
+        "id" : "12",
+        "bookCover" : "https://m.media-amazon.com/images/I/61vZr+Uy--L._SL1000_.jpg",
+         "bookName": "Atomik Alışkanlıklar",
+          "authorName": "James Clear",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "352",
+         "description": "Atomik Alışkanlıklar size alışkanlıklarınızdan zarar değil, fayda göreceğiniz şekilde hayatınızı yeniden tasarlamayı öğretecek.Hedefleriniz ne olursa olsun, Atomik Alışkanlıklar size her geçen gün %1 daha iyiye gitmeniz için etkisi kanıtlanmış bir çerçeve sunuyor. Şimdi arkanıza yaslanın, alışkanlıkları şekillendirme konusunda dünyanın önde gelen uzmanlarından biri olan James Clear'dan, iyi alışkanlıklar edinirken kötü alışkanlıklardan kurtulmanın yollarını öğreneceğiz.Clear, karmaşık konuları günlük yaşamda ve iş hayatında kolayca uygulanabilecek basit davranışlara indirgeme konusundaki başarısıyla tanınmış bir isim. Atomik Alışkanlıklar kitabında, iyi alışkanlıkları kaçınılmaz, kötü alışkanlıkları ise imkansız hale getirmek için kolay anlaşılır bir kılavuz yaratmak amacıyla biyoloji, psikoloji ve nörobilim alanlarında doğruluğu kanıtlanmış fikirlerden faydalanıyor."
+    },{
+        "id" : "13",
+        "bookCover" : "https://m.media-amazon.com/images/I/51sDvYgWbAL._SL1000_.jpg",
+         "bookName": "Kendi Kendine MBA",
+          "authorName": "Josh Kaufman",
+          "publishYear": "2016",
+         "edition": "2",
+          "pages": "528",
+         "description": "BU KİTABI OKUYUN PARANIZ DA ZAMANINIZ DA SİZE KALSIN!Harvard ve Stanford gibi seçkin okullar bile, çağımızın gereksinimlerini karşılamayan, güncelliğini yitirmiş PowerPoint sunumları ile gereksiz finansal modelleri öğretmekten ileri gidemezken, Kaufman, size bir işin gerçekten nasıl yürüdüğünü gösteriyor. Bu kitapta başarılı olmak için bilmeniz gereken üretim, satış ve pazarlamanın temel prensipleri ile insan psikolojisi, takım çalışması ve sistem yaratmanın en ince ayrıntılarını bulacaksınız.Modern işletme eğitiminin kendini yetiştirmiş, aykırı profesörü Josh Kaufman ders kitaplarını yırtıp attı ve dünya genelinde yüz binlerce kişinin, iş hayatıyla ilgili en temel kavramları kendi başlarına öğrenmelerini sağladı. Şimdi de girişimcilik, pazarlama, satış, müzakere, üretim, verimlilik ve daha birçok konuyu tek bir kitapta toplayarak okurla buluşturuyor. Kendi Kendine MBA en değerli işletme derslerini, gerçek hayatta karşınıza çıkacak zorlukları aşmanıza yardım edecek bir şekilde basit ve etkili zihin modellerine dönüştürüyor.İşletme okullarına gitmek yerine bu kitabı okuyun. Hem daha iyi sonuçlar alacak hem de yüz binlerce doların cebinizde kalmasını sağlayacaksınız."
+    },{
+        "id" : "14",
+        "bookCover" : "https://m.media-amazon.com/images/I/51WsX5Uuc9L._SL1000_.jpg",
+         "bookName": "İlk 20 Saat: İstediğiniz şeyi hızlıca öğrenmenin en etkili yolları",
+          "authorName": "Josh Kaufman",
+          "publishYear": "2016",
+         "edition": "1",
+          "pages": "368",
+         "description": "Öğrenmek istediğiniz şeyleri şöyle bir düşünün. Listenizde neler var? Başlamanıza ne engel oluyor? Yeni beceriler edinmek için harcamanız gereken çaba ve zaman konusunda mı endişeleniyorsunuz? Hani şu ayıramadığınız zaman ve sarf etmek istemediğiniz çaba.Bir araştırmaya göre yeni bir beceride uzmanlık seviyesine erişmek için 10.000 saat gerekiyor. Dur durak bilmeyen bu dünyada kimin bu kadar vakti var ki? Bu da yetmezmiş gibi, yeni bir şey öğrenmeye adadığınız ilk saatler hep en sinir bozucu olanlardır. Yeni bir dili, enstrüman çalmayı, golf oynamayı ya da muhteşem fotoğraflar çekmeyi öğrenmek işte bu yüzden zordur. Televizyon izlemek ve internette sörf yapmak ise çok daha kolaydır.osh Kaufman, İlk 20 Saat'te hızlı beceri edinimi için sistematik bir yaklaşım sunarak yeni şeyleri nasıl mümkün olduğunca çabuk öğreneceğinizi anlatıyor. Oluşturduğu yöntem karmaşık becerileri kısımlara ayırmayı, pratik yaparken maksimum verim almayı ve karşınıza çıkan belli başlı engelleri ortadan kaldırmayı size tek tek gösterecek. İyice odaklanarak pratik yapıp 20 saati tamamlayınca hakkında hiçbir şey bilmediğiniz bir konuda gözle görülür ilerleme kaydedecek, söz konusu beceriyi belirli bir seviyede uygulamaya başlayacaksınız.Bu yöntem sadece teoriden ibaret değil; test edildi, onaylandı. Kaufman, web uygulaması hazırlamayı, ukulele çalmayı, yoga yapmayı, on parmak klavye kullanmayı, rüzgar sörfü yapmayı ve dünyanın en eski, en karmaşık masa oyununu oynamayı kendi yaklaşımını bizzat uygulayarak öğrenecek. İşe yarayıp yaramadığını görmek içinse okuyucuyu da ona katılmaya davet ediyor.Peki siz ne öğrenmek istiyorsunuz?"
+    },{
+        "id" : "15",
+        "bookCover" : "https://m.media-amazon.com/images/I/41hidoxYKTL._SL1000_.jpg",
+         "bookName": "Ustalık",
+          "authorName": "Robert Greene",
+          "publishYear": "2015",
+         "edition": "3",
+          "pages": "416",
+         "description": "Gücün en üstün biçimi ustalıktır.Yaşamını güç yasalarını inceleyerek geçiren Robert Greene şimdi tarihin en kudretli insanlarının güç sahibi olmak için geçtiği yolların sırlarını sizlerle paylaşıyor. İlk kez bu kitapta tanımlandığı gibi eğer zorlu ama açık yolları izlersek, hepimizin içinde saklı olan usta olma potansiyelini ortaya çıkarırız.Seçtiğiniz alanın sırlarını öğrenin, sıkı bir çıraklığa boyun eğin, yılların getirdiği deneyimlerin gizli bilgilerini özümseyin, rakiplerinizi geride bırakın ve sonunda içinizde biçimlenecek olan mükemmeliyet modellerini ortaya koyun. Einstein, Darwin ve bu kitap için görüşülen dokuz çağdaş ustanın davranışlarını dikkatle okuduktan sonra, içinizdeki tutku açığa çıkacak ve 'usta' olacaksınız."
+    },{
+        "id" : "16",
+        "bookCover" : "https://m.media-amazon.com/images/I/61yZZRhj29L._SL1500_.jpg",
+         "bookName": "Sınırsız",
+          "authorName": "Jim Kwik",
+          "publishYear": "2022",
+         "edition": "10",
+          "pages": "400",
+         "description": "Bu kitapla, sınırlarından kurtulan yeni benliğinizle tanışacaksınız! Ünlü Beyin Koçu Jim Kwik, 25 yılı aşkın bir süredir, gerçek yeteneklerini ortaya çıkarmak üzere hayatın her alanından insanlarla çalıştı. Alanında çığır açan bu kitabında; dünyada en iyi performansları sergileyen kişilerin öğrenmelerini hızlandırmak için kullandıkları bilime dayalı uygulamaları ve test edilmiş teknikleri ortaya koyuyor.'Beynimiz dünyadaki en güçlü teknolojidir ama kullanım kılavuzu yoktur. Ancak bu, artık değişiyor. Bundan böyle sınırlamalar olmayacak. Başkaları ne söylerse söylesin, siz beyninizi nasıl kullanacağınızı bilirseniz potansiyeliniz sonsuz olur.SINIRSIZ kitabının kalbinde, hayatınızı değiştirecek bir sır yatıyor: En verimli şekilde nasıl öğrenileceğini öğrendiğinizde, sınırlayıcı inançlardan kurtulabilir, yeni başarı seviyelerine ulaşabilirsiniz. Bu kitap teoriden ibaret değildir; içinizde var olan sınırsız güçlerinizi ortaya çıkarabilmeniz için tam olarak ne yapmanız gerektiğini gösteren pratik, kolay ve kanıtlanmış bir plandır.Sınırsız olduğunuzda, sınırsız bir düşünce yapısına sahip olacaksınız. Sınırlamalarınızı ortadan kaldırdığınız için, beyninizin daha önce hayal ettiğinizden çok daha güçlü bir araç olduğunu ve zihninizi öğrenmek istediğiniz her neyse onu öğrenmeye odaklayarak hemen hemen her beceriyi kazanabileceğinizi anlıyorsunuz.Küçük bir adım atın ama bir yerden başlayın. Herhangi bir yerden! Bunu yaptığınızda, kendinizle ilgili keşfettikleriniz karşısında şaşkına döneceksiniz. Sınırsız olan benliğiniz, gerçekten olduğunuz ve şu anda hayal edemeyeceğiniz şeyleri yapacak kişidir.'Kendinizi tanıyın.Kendinize güvenin.Kendinizi sevin.Kendiniz olun.Sınırsız olun."
+    },{
+        "id" : "17",
+        "bookCover" : "https://m.media-amazon.com/images/I/51AXyq87B8L._SL1000_.jpg",
+         "bookName": "Sıfırdan Bire",
+          "authorName": "Peter Thiel",
+          "publishYear": "2016",
+         "edition": "1",
+          "pages": "224",
+         "description": "Facebook, Microsoft, Paypal, Instagram, Twitter, Linkedin, Whatsapp gibi bir startup fikriniz var ama bunu nasıl hayata geçireceğinizi bilmiyor musunuz? PayPal'ın kurucu ortaklarından ve Facebook'un yatırımcılarından biri olan girişimci Peter Thiel bu sorunun cevabını elinizde tuttuğunuz kitapta veriyor.Thiel öncelikle yaşadığımız çağa dair çok sıradışı bir önermede bulunuyor: 'Küçük mobil cihazlar bize her ne kadar birer mucize gibi görünse de aslında teknolojik açıdan durgun geçen bir çağda yaşıyoruz.' Elbette bilgi teknolojileri günden güne hızla gelişiyor ama ilerleme neden sadece Silikon Vadisi ya da bilgisayarlarla sınırlı kalsın ki? İlerleme her endüstri ve sektörde gerçekleştirilebilir bir süreçtir ve başarıya ulaşmak için ihtiyacımız olan tek şey özgün bir fikre sahip olmaktır.Yeni bir şey yapmaktansa var olanı kopyalamak her zaman daha kolaydır. Ne var ki, nasıl yapıldığını bildiğimiz bir şeyi yeniden yapmak dünyayı 1'den n'e götürür. Ama yeni bir şey yaptığınızda 0'dan 1'e gidersiniz. Bir sonraki Bill Gates olmak için bir işletim sistemi kurmak yeterli olmayacak. Larry Page ya da Sergey Brin gibi başarılı olabilmek için yeni bir arama motoru geliştirmek yetmeyecek. Yarının kazananları bugünün pazarıyla zalim bir rekabete girip bundan kazançlı çıkmayacak. Hep beraber rekabetten kaçınacaklar çünkü ortaya koydukları şey benzersiz olacak."
+    },{
+        "id" : "18",
+        "bookCover" : "https://m.media-amazon.com/images/I/51wy9CAfSIL.jpg",
+         "bookName": "Pazarlama 5.0: İnsan için Teknoloji",
+          "authorName": "Philip Kotler",
+          "publishYear": "2021",
+         "edition": "1",
+          "pages": "236",
+         "description": "Pazarlamanın üstadından pazarlamaya yeni bir reçete.Pazarlama 5.0'da Philip Kotler, pazarlamacıların teknolojiden yararlanarak müşterilerin ihtiyaç ve beklentilerine nasıl cevap verebileceklerini ve dünyada fark yaratabileceklerini açıklıyor.Geleneksel pazarlama anlayışlarının dijital dönüşümlerle ve müşterilerin değişen davranışlarıyla altüst olduğu bir çağda, bu kitap pazarlamacılara teknoloji ve iş modelindeki yeniliklerle son on yılda müşterilerin davranış kalıplarında gözlemlenen büyük değişimleri bir araya getirmenin yollarını gösteriyor.Kotler'in modern pazarlamayı anlamak için kilit öneme sahip olduğunu gördüğü konular arasında yapay zeka, çevik pazarlama, tek kişilik segmentler, bağlamsal teknoloji, yüz ve ses tanıma teknolojisi, nesnelerin interneti, blokzinciri, sanal ve artırılmış gerçeklik, farklı kuşaklara yönelik farklı pazarlama yaklaşımları yer alıyor.Hem geleneksel hem de dijital mecralarda iş yapanlar için mükemmel bir rehber niteliğindeki Pazarlama 5.0, uygulanabilir önerileriyle ve sunduğu benzersiz kavrayışlarla pazarlama alanına yeni bir soluk getiriyor."
+    },{
+        "id" : "19",
+        "bookCover" : "",
+         "bookName": "Akıllı Yatırımcı",
+          "authorName": "Benjamin Graham",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "648",
+         "description": "Yatırımcılıkla spekülasyonun farkını öğrenerek spekülasyondan korunacak,Yatırımcı profilinizi, riske bakış açınızı öğrenerek kendiniz için doğru yatırım stratejisini oluşturacak,özel emeklilik fonlarınızı etkili ve verimli yönetmeyi öğrenecek,birikimlerinizi krizlere, enflasyona ve panik dalgalarına karşı koruyacak,orta ve uzun vadede akılcı, sürdürülebilir ve reel getiriler elde edecek,niteliği ne olursa olsun varlıkların doğru değer ve fiyatlarını güvenilir şekilde bilecek,akıllı bir yatırımcı için panik dalgalarının ve fiyat düşüşlerinin fırsat olduğunun bilincine varacak,doğru zaman ve koşullarda alım-satım yapmanın ilkelerini kavrayacak,gereksiz alım-satım ve pozisyon alımların daima zarar getirdiğini bilecek,değerli ve doğru fiyattan alınmış varlıkları furyalara kapılmadan elde tutmanın önemini anlayacaksınız."
+    },{
+        "id" : "20",
+        "bookCover" : "https://m.media-amazon.com/images/I/41O4FPJ+ikL.jpg",
+         "bookName": "Bileşik Etki: Küçük Adımlar Büyük Sonuçlar",
+          "authorName": "Darren Hardy",
+          "publishYear": "2023",
+         "edition": "1",
+          "pages": "192",
+         "description": "Bu kitapta yutturmaca yok. Abartı yok. Sihirli bir değnek hiç yok! Sadece ve sadece başarının şaşmaz ilkeleri var.Küçük günlük kararlar sizi ya arzu ettiğiniz hayata ya da olası felaketlere götürür. Darren Hardy'nin kitabının temelini oluşturan 'Bileşik Etki' sisteminin ilkeleriyse sizi felaketlere savrulmaktan korur.İş hayatınızda, ilişkilerinizde ve yaşamın pek çok alanında olağanüstü başarılara olanak sağlayan, temel ilkeler bütününden damıtılarak yazılan bu kitap en doğru kararları almanızda size yardımcı olur. Uygulaması kolay, adım adım ilerleyen bu sistem, başarılarınızı artırmanıza, ilerleyişinizi planlamanıza ve arzu ettiklerinizi gerçekleştirmenize olanak tanır."
+    },{
+        "id" : "21",
+        "bookCover" : "https://m.media-amazon.com/images/I/51nApuyUhTL._SL1000_.jpg",
+         "bookName": "Büyük Veri İş Başında",
+          "authorName": "Bernard Marr",
+          "publishYear": "2017",
+         "edition": "1",
+          "pages": "296",
+         "description": "Günümüzde pek çok kişi Büyük Veri'nin gücünün ve etkisinin farkında, ancak iş bu aracı en verimli şekilde kullanmaya geldiğinde pek çoğumuzun çuvalladığı da bir gerçek. Bu boşluğu gören yazar Bernard Marr; tıptan hukuka, konaklamadan modaya, bilim dünyasından bankacılığa uzanan, oldukça geniş bir yelpazeye yayılmış kuruluşların, yaşamın içindeki sorunları çözmek için Büyük Veri'den nasıl yararlandığını anlatıyor.Netflix, Facebook, Microsoft, Ralph Lauren, Google, Apple, Twitter, Uber, Amazon, Airbnb ve daha nicelerinin Büyük Veri maceralarını okuduğunuzda, hangi meslekten olursanız olun, Büyük Veri'nin işinizi nasıl dönüştürebileceğinize dair ilhamla dolacaksınız."
+    },{
+        "id" : "22",
+        "bookCover" : "https://m.media-amazon.com/images/I/51q5hkuW0zL._SL1000_.jpg",
+         "bookName": "İnternetin Geçmişi ve Dijital Gelecek ",
+          "authorName": "Johnny Ryan",
+          "publishYear": "2020",
+         "edition": "1",
+          "pages": "286",
+         "description": "İnsan ilişkilerinde büyük bir değişim çağının eşiğindeyiz. Siyasi, ticari ve kültürel hayat değişiyor. Sanayi çağının merkezî, hiyerarşik ve standartlaştırılmış yapıları, yerlerini tamamen farklı bir şeye bırakıyor: Gelişmekte olan dijital çağın ekonomisine. İnternet'in Geçmişi ve Dijital Gelecek'te İnternet'in 1950'lerden günümüze uzanan gelişim hikâyesi anlatılıyor. Savaş, terörizm, entelektüel özgürlük, telif hakkı ihlali ve sansür gibi alanlarda birey ile devlet arasındaki güç dengesinin nasıl değiştiği konu ediliyor. Bu çalışmasında Johnny Ryan, İnternet'in siyasi kampanyaları nasıl dönüştürdüğünü inceliyor, İnternet ağının kendine güvenen niş tüketicilerden oluşan yeni sanal nüfusu nasıl özgürleştirdiğini irdeliyor ve nokta-com patlamasının küçük firmalara dijital pazarlamanın gücünden faydalanmayı nasıl öğrettiğini açıklıyor. Önümüzdeki yıllarda yeni platformlar, mülkiyet kontrolü ile yeniliklerin herkese açık olması arasındaki çizgiyi nasıl çekeceklerine bağlı olarak yükselişe ya da düşüşe geçecekler. Geçmişin trendleri, müzik kayıt ve gazetecilik endüstrilerinin geleceğine ilişkin zayıf bir umudu canlı tutmuş olabilir. Bu kitapta dijital geleceğin medyasını, siyasetini ve işletmelerini şekillendiren yeni trendlere ışık tutuluyor. Soğuk Savaş döneminin devlet kontrollü sistemlerinden günümüzün bulut bilişimine, kullanıcı tarafından oluşturulan içeriğe ve yeni evrensel ortak varlıklara kadar birçok trend ele alınıyor. Dr. Johhny Ryan, The Irish Times gazetesinin Teknolojik Buluşlar ve Yenilikler Başyazarı'dır. Aynı zamanda, Cambridge Üniversitesi İşletme Fakültesi bünyesindeki dijital çevre stratejisi ve pazarlama grubunun çalışma ortaklarından biridir."
+    },{
+        "id" : "23",
+        "bookCover" : "https://m.media-amazon.com/images/I/61Epr903I3L._SL1000_.jpg",
+         "bookName": "Tanrı Matematikçi Mi?",
+          "authorName": "Mario Livio",
+          "publishYear": "2015",
+         "edition": "1",
+          "pages": "320",
+         "description": "Tanrı daima matematik kullanır.Yukarıdaki sözü Platon söylemişti. Nobel ödüllü Eugene Wigner, “Nasıl olur da matematik doğa yasalarıyla bu denli uyumlu olabilir?” diye sormuştu. Ve yine büyük düşünür Descartes, “Matematiksel olarak kanıtlanamayan hiçbir şeyi doğru olarak kabul etmem!” demişti. Eski çağlardan bu yana tüm bilim insanları, filozoflar, soyut bir disiplinin doğal dünyayı böylesine kolay bir biçimde açıklamasını hayretle karşılamışlardır. Dahası matematik, zamanında bilinmeyen ve bugün varlıkları kanıtlanan atom zerrecikleri ve kozmik fenomenler hakkında da kehanetlerde bulunmuştur.Matematik bir buluş mudur yoksa keşfedilmiş bir bilinmeyen mi? Einstein’ın iddia ettiği gibi matematik deneyimlerden bağımsız, insan zihninin ürettiği soyut bir kavram olsaydı, içinde yaşadığımız dünyayı böylesine mükemmel ve kesin bir şekilde tarif edebilir miydi? Veya kehanetlerde bulunabilir miydi?Hubble Uzay Teleskopu Bilim Enstitüsü Başkanı Mario Livio, Pisagor’dan günümüze dek uzanan matematiksel düşünceleri inceleyerek, aklımızı kurcalayan soruları zekice yanıtlıyor. Bu harika kitap, insan zihninin derinlikleri ile bilim dünyası arasındaki ilişkiyi merak edenler için eşsiz bir rehber olacaktır."
+    },{
+        "id" : "24",
+        "bookCover" : "https://m.media-amazon.com/images/I/61aNbW99kJL._SY466_.jpg",
+         "bookName": "Veri Bilimi",
+          "authorName": "JOn D. Kelleher/Brendan Tierney",
+          "publishYear": "2020",
+         "edition": "3",
+          "pages": "192",
+         "description": "Bugün internette gördüğümüz ilanlar, bizlere önerilen kitap ve filmler, istenmeyen e-postalar, hatta sağlık sigortamızın primi veri bilimiyle belirleniyor. Veri toplamak, depolamak ve işlemek hiç bu kadar kolay olmamıştı; bu da veri biliminin büyük bir hızla gelişmesini açıklıyor.Veri Bilimi alanın tarihçesiyle açılıyor; temel veri kavramlarını, veri bilimi projelerinin aşamalarını, veri altyapısını, çoklu kaynaklardan veri elde etmenin zorluklarını ve bu konudaki uzmanlığın gerçek dünyada karşılaştığımız sorunlara nasıl bir yaklaşım getireceğini ele alıyor. Konuyu ahlaki ve hukuki boyutları açısından da gözden geçiren Veri Bilimi, bu bilim dalını başarıyla kullanma yollarını ve gelecekte nasıl bir etki alanı yaratacağını merak edenlere ideal bir kaynak sunuyor."
+    },{
+        "id" : "25",
+        "bookCover" : "https://m.media-amazon.com/images/I/61kMdybJcDL._SL1000_.jpg",
+         "bookName": "Kozmos: Evrenin ve Yaşamın Sırları",
+          "authorName": "Carl Sagan",
+          "publishYear": "2007",
+         "edition": "23",
+          "pages": "384",
+         "description": "nsanoğlu uzay okyanusuna açılıyor- Canlıların ve evrenin yapısı- Doğa yasaları tüm evrende geçerlidir- Cennet ve cehennem- Başka gezegenlerde yaşam var mı?- Keşif yolculuklarının öyküsü- Samanyolu: Gecenin bel kemiği- Zaman ve mekan içinde yolculuk- Başka evrenlerin kapısı karadelikler- Sonsuzluğun kıyısı: Dördüncü boyut- Aklın evreni- Galaktik uygarlık- Yaşamak ya da yokolmak konusunda kim karara verecek?"
+    },{
+        "id" : "26",
+        "bookCover" : "https://m.media-amazon.com/images/I/51JisyM9uLL._SL1000_.jpg",
+         "bookName": "Zamanın Kısa Tarihi",
+          "authorName": "Stephen Hawking",
+          "publishYear": "2013",
+         "edition": "106",
+          "pages": "255",
+         "description": "Yaklaşık kırk dile çevrilen ve dünya üzerindeki her 750 kişiden birinin edindiği Zamanın Kısa Tarihi çağımızın en büyük zihinlerinden biri olan Stephen Hawking'in sorularına yanıt aradığı bir kitap:Evren nasıl başladı ve başlamasını olanaklı kılan şey neydi? Zaman her daim ileri doğru mu akar? Evrenin bir sonu ya da sınırı var mı? Uzayda başka boyutlar var mı? Her şey sona erdiğinde ne olacak? Evrenin başlangıcından 300.000 yıl sonrasını araştıran ve Hawking'in varlığını ileri sürdüğü uzayzaman dokusundaki kırışıklıkları tespit eden kozmik mikrodalga ardalan ışınımı uydularının (WMAP ve Planck) verileri ve LIGO deneyinin kütleçekim dalgalarını saptaması gibi yeni gelişmeler ışığında Zamanın Kısa Tarihi güncelliğini koruyor."
+    },{
+        "id" : "27",
+        "bookCover" : "https://m.media-amazon.com/images/I/51FGxBw8q9L._SL1000_.jpg",
+         "bookName": "Simyacı",
+          "authorName": "Paulo Coelho",
+          "publishYear": "2016",
+         "edition": "166",
+          "pages": "184",
+         "description": "Simyacı, dünyaca ünlü Brezilyalı yazar Paulo Coelho'nun üçüncü romanı. 1996 yılından bu yana Türkiye'de de çok okundu, çok sevildi, çok övüldü bu kitap. Bir büyük Doğu klasiği olan Mevlana'nın ünlü Mesnevi'sinde yer alan bir küçük öyküden yola çıkarak yazılan bu roman, yüreğinde çocukluğunun çırpınışlarını taşıyan okurlar için bir 'klasik' yapıt haline geldi. Simyacı, İspanya'dan kalkıp Mısır piramitlerinin eteklerinde hazinesini aramaya giden Endülüslü çoban Santiago'nun masalsı yaşamının öyküsü. Ama aynı zamanda bir 'nasihatname'; 'Yazgına nasıl egemen olacaksın? Mutluluğunu nasıl kuracaksın?' gibi sorulara yanıt arayan bir yaşam ve ahlak kılavuzu. Mistik bir peri masalına benzeyen bu romanın, dünyanın dört bir yanında bunca sevilmesinin gizi, kuşkusuz bu kılavuzluk niteliğinden kaynaklanıyor. Simyacı'yı okumak, herkes daha uykudayken şafak vakti uyanıp, güneşin doğuşunu izlemeye benziyor."
+    }
 
 	]
 }
