@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		250314532D2DB323002EAE97 /* .env in Resources */ = {isa = PBXBuildFile; fileRef = 250314522D2DB323002EAE97 /* .env */; };
+		2504E0F12D2EF4E1004CB534 /* BookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2504E0F02D2EF4E1004CB534 /* BookViewModel.swift */; };
 		2530E7382C8A84C0000F5498 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2530E7372C8A84C0000F5498 /* OnboardingView.swift */; };
 		253337C42CE4DC2100EFCC93 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 253337C32CE4DC2100EFCC93 /* GoogleService-Info.plist */; };
 		253337C62CE4FBD200EFCC93 /* kesitokur-app-books.json in Resources */ = {isa = PBXBuildFile; fileRef = 253337C52CE4FBD200EFCC93 /* kesitokur-app-books.json */; };
@@ -46,14 +47,13 @@
 		259A02A62CDE90890055FBFF /* FirebaseVertexAI in Frameworks */ = {isa = PBXBuildFile; productRef = 259A02A52CDE90890055FBFF /* FirebaseVertexAI */; };
 		25B5544B2D2C3C1D00ADB13F /* UploadDataToFirestore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B5544A2D2C3C1D00ADB13F /* UploadDataToFirestore.swift */; };
 		25B5544E2D2C3D1000ADB13F /* uploadDataToFirestoreManually.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B5544D2D2C3D1000ADB13F /* uploadDataToFirestoreManually.swift */; };
-		25B8209E2C7BA3BD001C8954 /* BookListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B8209D2C7BA3BD001C8954 /* BookListView.swift */; };
 		25B820A02C7BA593001C8954 /* BookModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B8209F2C7BA593001C8954 /* BookModel.swift */; };
-		25B820A22C7BA693001C8954 /* BookList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B820A12C7BA693001C8954 /* BookList.swift */; };
 		25D5E3742BAB719E00042FF2 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D5E3732BAB719E00042FF2 /* WelcomeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		250314522D2DB323002EAE97 /* .env */ = {isa = PBXFileReference; lastKnownFileType = text; path = .env; sourceTree = "<group>"; };
+		2504E0F02D2EF4E1004CB534 /* BookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookViewModel.swift; sourceTree = "<group>"; };
 		2530E7372C8A84C0000F5498 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		253337C32CE4DC2100EFCC93 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		253337C52CE4FBD200EFCC93 /* kesitokur-app-books.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "kesitokur-app-books.json"; sourceTree = "<group>"; };
@@ -69,9 +69,7 @@
 		2571B0732BA67F5E00E41D93 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		25B5544A2D2C3C1D00ADB13F /* UploadDataToFirestore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadDataToFirestore.swift; sourceTree = "<group>"; };
 		25B5544D2D2C3D1000ADB13F /* uploadDataToFirestoreManually.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = uploadDataToFirestoreManually.swift; sourceTree = "<group>"; };
-		25B8209D2C7BA3BD001C8954 /* BookListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookListView.swift; sourceTree = "<group>"; };
 		25B8209F2C7BA593001C8954 /* BookModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookModel.swift; sourceTree = "<group>"; };
-		25B820A12C7BA693001C8954 /* BookList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookList.swift; sourceTree = "<group>"; };
 		25D5E3732BAB719E00042FF2 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -143,12 +141,11 @@
 				25D5E3732BAB719E00042FF2 /* WelcomeView.swift */,
 				254B2A342C828EA10000E736 /* MainScreenView.swift */,
 				255042E92D28053B00A668DA /* KesitOkurAppTexts.swift */,
-				25B8209D2C7BA3BD001C8954 /* BookListView.swift */,
 				25B8209F2C7BA593001C8954 /* BookModel.swift */,
 				25B5544A2D2C3C1D00ADB13F /* UploadDataToFirestore.swift */,
 				255042EF2D2835C300A668DA /* FavoritePageView.swift */,
+				2504E0F02D2EF4E1004CB534 /* BookViewModel.swift */,
 				25B5544D2D2C3D1000ADB13F /* uploadDataToFirestoreManually.swift */,
-				25B820A12C7BA693001C8954 /* BookList.swift */,
 				255042ED2D2835A400A668DA /* SettingsPageView.swift */,
 				255042EB2D28356E00A668DA /* ProfilePageView.swift */,
 				253337C52CE4FBD200EFCC93 /* kesitokur-app-books.json */,
@@ -271,13 +268,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				2571B06F2BA67F5C00E41D93 /* LoginPageView.swift in Sources */,
+				2504E0F12D2EF4E1004CB534 /* BookViewModel.swift in Sources */,
 				255042EC2D28356E00A668DA /* ProfilePageView.swift in Sources */,
 				25B5544E2D2C3D1000ADB13F /* uploadDataToFirestoreManually.swift in Sources */,
 				25B820A02C7BA593001C8954 /* BookModel.swift in Sources */,
-				25B8209E2C7BA3BD001C8954 /* BookListView.swift in Sources */,
 				25B5544B2D2C3C1D00ADB13F /* UploadDataToFirestore.swift in Sources */,
 				255042EA2D28053B00A668DA /* KesitOkurAppTexts.swift in Sources */,
-				25B820A22C7BA693001C8954 /* BookList.swift in Sources */,
 				25D5E3742BAB719E00042FF2 /* WelcomeView.swift in Sources */,
 				255042F02D2835C300A668DA /* FavoritePageView.swift in Sources */,
 				255042EE2D2835A400A668DA /* SettingsPageView.swift in Sources */,
