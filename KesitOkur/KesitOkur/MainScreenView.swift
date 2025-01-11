@@ -2,102 +2,225 @@ import SwiftUI
 import Firebase
 
 struct MainScreenView: View {
-    @StateObject private var viewModel = BooksViewModel() // ViewModel'den verileri alıyoruz.
+    @StateObject private var viewModel = BooksViewModel()
+    @EnvironmentObject var favoritesManager: FavoritesManager
+    
+    init() {
+        // Hide the navigation bar when scrolling
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.black]
+        appearance.backgroundColor = .clear
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = nil
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        
+        // Make TabBar blend with the gradient
+        let tabBarAppearance = UITabBarAppearance()
+        tabBarAppearance.configureWithDefaultBackground()
+        tabBarAppearance.backgroundColor = UIColor(Color(red: 1, green: 0.85, blue: 0.4))
+        
+        // Configure TabBar items colors with shadow
+        let shadow = NSShadow()
+        shadow.shadowColor = UIColor.black.withAlphaComponent(0.3)
+        shadow.shadowOffset = CGSize(width: 0, height: 1)
+        shadow.shadowBlurRadius = 3
+        
+        let textAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.black,
+            .shadow: shadow
+        ]
+        
+        tabBarAppearance.stackedLayoutAppearance.normal.iconColor = .black
+        tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = textAttributes
+        tabBarAppearance.stackedLayoutAppearance.selected.iconColor = .black
+        tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = textAttributes
+        
+        UITabBar.appearance().standardAppearance = tabBarAppearance
+        UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+    }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Arka Plan Renk Gradyanı
-                RadialGradient(
-                    gradient: Gradient(colors: [.blue, .green]),
-                    center: .bottom,
-                    startRadius: 0,
-                    endRadius: UIScreen.main.bounds.height
-                )
-                .ignoresSafeArea()
+        TabView {
+            // Books Tab
+            NavigationView {
+                ZStack {
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 1, green: 0.85, blue: 0.4),  // Warm yellow
+                            Color.white
+                        ]),
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
 
-                if viewModel.isLoading {
-                    ProgressView("Kitaplar Yükleniyor...")
-                } else {
-                    // Kitaplar ve içerikler
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            ForEach(viewModel.books) { book in
-                                NavigationLink(destination: BookDetailView(book: book)) {
-                                    HStack(spacing: 25) {
-                                        AsyncImage(url: URL(string: book.bookCover)) { image in
-                                            image
-                                                .resizable()
-                                                .frame(width: 75, height: 100)
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                        .cornerRadius(5)
-                                        
-                                        VStack(alignment: .leading) {
-                                            Text(book.bookName)
-                                                .font(.headline)
-                                                .multilineTextAlignment(.center)
-                                                .foregroundStyle(.black)
-                                                .lineLimit(nil)
-                                                .fixedSize(horizontal: false, vertical: true)
-                                            
-                                            Text(book.authorName)
-                                                .font(.caption)
-                                                .italic()
-                                                .foregroundStyle(.white)
-                                            Text("Yayın Yılı: \(book.publishYear)")
-                                                .font(.caption)
-                                                .italic()
-                                                .foregroundStyle(.black)
-                                            Text("Baskı Sayısı: \(book.edition)th")
-                                                .font(.caption)
-                                                .italic()
-                                                .foregroundStyle(.black)
-                                            Text("Sayfa: \(book.pages)")
-                                                .font(.caption)
-                                                .italic()
-                                                .padding(.bottom, 5)
-                                                .foregroundStyle(.black)
-                                            
-                                            Text(book.description)
-                                                .font(.caption2)
-                                                .lineLimit(3)
-                                                .foregroundStyle(.black)
-                                                .multilineTextAlignment(.leading)
-                                        }
-                                    }
-                                    .padding(1)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 5)
-                                }
-                            }
-                        }.navigationTitle("Kitaplarım")
-                        .padding()
+                    if viewModel.isLoading {
+                        ProgressView("Kitaplar Yükleniyor...")
+                    } else {
+                        BookListView(books: viewModel.books)
                     }
                 }
-                
+                .navigationBarTitleDisplayMode(.large) // This will show the large title only at the top
+                .navigationTitle("Kitaplarım")
+            }
+            .tabItem {
+                Image(systemName: "book.fill")
+                Text("Kitaplar")
+            }
+            
+            // Search Tab
+            NavigationView {
+                SearchView(viewModel: viewModel)
+            }
+            .tabItem {
+                Image(systemName: "magnifyingglass")
+                Text("Ara")
+            }
+            
+            // Favorites Tab
+            FavoritePageView()
+                .tabItem {
+                    Image(systemName: "heart.fill")
+                    Text("Favoriler")
+                }
+            
+            // Profile Tab
+            NavigationView {
+                ProfileView()
+            }
+            .tabItem {
+                Image(systemName: "person.fill")
+                Text("Profil")
             }
         }
+        .accentColor(.white) // This will make selected tab items white
         .onAppear {
             viewModel.fetchBooks()
         }
     }
 }
 
-struct BookDetailView: View {
+// Separate the book list into its own view for better organization
+struct BookListView: View {
+    let books: [Book]
+    @EnvironmentObject var favoritesManager: FavoritesManager
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 20) {
+                ForEach(books) { book in
+                    BookCardView(book: book)
+                }
+            }
+            .padding()
+        }
+    }
+}
+
+// Separate book card into its own view
+struct BookCardView: View {
+    let book: Book
+    @EnvironmentObject var favoritesManager: FavoritesManager
+    
+    var body: some View {
+        NavigationLink(destination: BookDetailView(book: book)) {
+            HStack(spacing: 25) {
+                AsyncImage(url: URL(string: book.bookCover)) { image in
+                    image
+                        .resizable()
+                        .frame(width: 75, height: 100)
+                } placeholder: {
+                    ProgressView()
+                }
+                .cornerRadius(5)
+                .background(Color.gray.opacity(0.1))
+                
+                BookInfoView(book: book)
+                
+                FavoriteButton(book: book)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 15)
+                    .fill(Color.customCard)
+                    .shadow(color: .customShadow, radius: 8, x: 0, y: 4)
+            )
+            .padding(.horizontal)
+        }
+    }
+}
+
+// Separate book info into its own view
+struct BookInfoView: View {
     let book: Book
     
     var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(book.bookName)
+                .font(.headline)
+                .bold()
+                .foregroundColor(.black)
+                .lineLimit(2)
+                .shadow(color: .black.opacity(0.2), radius: 0.5)
+            
+            Text(book.authorName)
+                .font(.subheadline)
+                .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.15))
+                .shadow(color: .black.opacity(0.2), radius: 0.5)
+            
+            Group {
+                Text("Yayın Yılı: \(book.publishYear)")
+                Text("Baskı Sayısı: \(book.edition)th")
+                Text("Sayfa: \(book.pages)")
+            }
+            .font(.caption)
+            .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.3))
+            .shadow(color: .black.opacity(0.2), radius: 0.5)
+            
+            Text(book.description)
+                .multilineTextAlignment(/*@START_MENU_TOKEN@*/.leading/*@END_MENU_TOKEN@*/)
+                .font(.caption2)
+                .foregroundColor(Color(red: 0.15, green: 0.15, blue: 0.3))
+                .lineLimit(2)
+                .shadow(color: .black.opacity(0.2), radius: 0.5)
+        }
+    }
+}
+
+// Separate favorite button into its own view
+struct FavoriteButton: View {
+    let book: Book
+    @EnvironmentObject private var favoritesManager: FavoritesManager
+    
+    var body: some View {
+        Button(action: {
+            favoritesManager.toggleFavorite(book: book)
+        }) {
+            Image(systemName: favoritesManager.isFavorite(book: book) ? "heart.fill" : "heart")
+                .foregroundColor(favoritesManager.isFavorite(book: book) ? .red : .black)
+                .padding(.trailing, 10)
+        }
+    }
+}
+
+struct BookDetailView: View {
+    let book: Book
+    @EnvironmentObject var favoritesManager: FavoritesManager
+    
+    var body: some View {
         ZStack {
-            // Arka Plan Gradyanı
-            RadialGradient(
-                gradient: Gradient(colors: [.blue, .green]),
-                center: .bottom,
-                startRadius: 0,
-                endRadius: UIScreen.main.bounds.height
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color(red: 1, green: 0.85, blue: 0.4),  // Warm yellow
+                    Color.white
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
             )
-            .ignoresSafeArea() // Arka planın tüm ekranı kaplamasını sağlarız
+            .ignoresSafeArea()
             
             ScrollView {
                 VStack(alignment: .center, spacing: 12) {
@@ -114,23 +237,30 @@ struct BookDetailView: View {
                     
                     Text(book.bookName)
                         .font(.title)
+                        .bold()
                         .multilineTextAlignment(.center)
-                        .font(.system(size: 16.0, weight: .bold))
-                        .padding(.horizontal, 20)
+                        .foregroundColor(.black)
                     
                     Text(book.authorName)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.15))
                     
                     Text(book.description)
                         .font(.body)
-                        .padding(.horizontal, 8)
+                        .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.3))
+                        .padding(.horizontal)
+                    
+                    FavoriteButton(book: book)
+                        .padding()
                 }
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
+
 #Preview {
     MainScreenView()
+        .environmentObject(FavoritesManager())
 }
 

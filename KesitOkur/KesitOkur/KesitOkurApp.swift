@@ -13,6 +13,7 @@ import FirebaseCore
 
 @main
 struct KesitOkurApp: App {
+    @StateObject private var favoritesManager = FavoritesManager()
     
     init() {
            FirebaseApp.configure()
@@ -23,6 +24,7 @@ struct KesitOkurApp: App {
             NavigationView{
                 LoginPageView()
             }
+            .environmentObject(favoritesManager)
         }
     }
 }
