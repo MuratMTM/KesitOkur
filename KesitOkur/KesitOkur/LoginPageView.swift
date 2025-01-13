@@ -1,66 +1,152 @@
 import SwiftUI
-import UIKit
+import FirebaseAuth
+import GoogleSignIn
+import GoogleSignInSwift
+import AuthenticationServices
 
 struct LoginPageView: View {
-    @State var username: String = ""
-    @State var password: String = ""
-    @State private var isLoggedIn: Bool = false
+    @StateObject private var authManager = AuthManager()
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var showError = false
+    @State private var errorMessage = ""
     
     var body: some View {
-        
         GeometryReader { geometry in
-            ZStack{
-                // Arka planı ZStack içinde tutuyoruz
+            ZStack {
+                // Background
                 Image(KesitOkurAppLoginPageTexts().booksImageText)
                     .resizable()
-                    .scaledToFill() // Görüntünün boyutunun ekrana tam uyum sağlamasını sağlar
+                    .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .ignoresSafeArea()
                 
-                VStack {
-                    Spacer().frame(height: geometry.size.height * 0.1) // Yüksekliği oranla ayarlıyoruz
+                VStack(spacing: 25) {
+                    // Profile Image and App Name
                     ProfileImageView(imageName: KesitOkurAppLoginPageTexts().profilePhotoImageText)
-                        .frame(width: 100, height: 100) // Küçük bir profil resmi
+                        .frame(width: 150, height: 150)
                     AppNameTextView(appName: KesitOkurAppLoginPageTexts().appNameText)
+                        .padding(.bottom, 20)
                     
-                    // Username TextField
-                    TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $username)
-                        .padding(15) // Padding artırıldı
-                        .background(Color.white.cornerRadius(10))
-                        .frame(width: geometry.size.width * 0.8) // Ekranın genişliğine göre ayarlandı
-                        .padding(.bottom, 10) // Altına daha az boşluk eklendi
-                    
-                    // Password SecureField
-                    SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
-                        .padding(15) // Padding artırıldı
-                        .background(Color.white.cornerRadius(10))
-                        .frame(width: geometry.size.width * 0.8) // Ekranın genişliğine göre ayarlandı
-                        .padding(.bottom, 10) // Altına daha fazla boşluk eklendi
-                    
-                    Spacer().frame(height: geometry.size.height * 0.01) // Alt kısımdan boşluk azaltıldı
-
-                    Text(KesitOkurAppLoginPageTexts().forgotPasswordText)
-                        .font(.system(size: 12.0, weight:.light))
-                         // Altındaki boşluk azaltıldı
-                    
-                    Button(action: {
+                    // Login Fields
+                    VStack(spacing: 15) {
+                        // Email Field
+                        TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $email)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .frame(width: geometry.size.width * 0.8)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.emailAddress)
                         
-                    }){
-                        SignInButtonView(buttonName: KesitOkurAppLoginPageTexts().signInButtonText)
-                    }.padding()
-                    .frame(width: geometry.size.width * 0.8) // Ekranın genişliğine göre ayarlandı
+                        // Password Field
+                        SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .frame(width: geometry.size.width * 0.8)
+                    }
                     
-                    Spacer()
-
-                    // Bottom buttons for Google, Email, Apple
-                    OnboardingView().bottomButton(text:SignInLogo().googleText, logo: SignInLogo().withGoogle )
-                    OnboardingView().bottomButton(text:SignInLogo().emailText, logo: SignInLogo().withEmail)
-                    OnboardingView().bottomButton(text:SignInLogo().appleText, logo: SignInLogo().withApple)
+                    // Forgot Password
+                    Text(KesitOkurAppLoginPageTexts().forgotPasswordText)
+                        .font(.system(size: 12.0, weight: .light))
+                        .padding(.top, 5)
+                    
+                    // Sign In Button
+                    Button(action: {
+                        Task {
+                            do {
+                                try await authManager.signInWithEmail(email: email, password: password)
+                            } catch {
+                                showError = true
+                                errorMessage = error.localizedDescription
+                            }
+                        }
+                    }) {
+                        Text(KesitOkurAppLoginPageTexts().signInButtonText)
+                            .frame(width: geometry.size.width * 0.8, height: 50)
+                            .background(Color.yellow.opacity(0.8))
+                            .foregroundColor(.black)
+                            .cornerRadius(10)
+                            .font(.headline)
+                    }
+                    
+                    // Divider
+                    HStack {
+                        Rectangle()
+                            .frame(height: 1)
+                        Text("veya")
+                            .foregroundColor(.black.opacity(0.6))
+                        Rectangle()
+                            .frame(height: 1)
+                    }
+                    .foregroundColor(.black.opacity(0.3))
+                    .frame(width: geometry.size.width * 0.8)
+                    .padding(.vertical)
+                    
+                    // Social Login Buttons
+                    VStack(spacing: 15) {
+                        // Google Sign In
+                        Button(action: {
+                            Task {
+                                do {
+                                    try await authManager.signInWithGoogle()
+                                } catch {
+                                    showError = true
+                                    errorMessage = error.localizedDescription
+                                }
+                            }
+                        }) {
+                            HStack {
+                                Image("googleLogo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 20, height: 20)
+                                Text("Google ile Devam Et")
+                                    .font(.headline)
+                            }
+                            .frame(width: geometry.size.width * 0.8, height: 50)
+                            .background(Color.white)
+                            .foregroundColor(.black)
+                            .cornerRadius(10)
+                            .shadow(color: .black.opacity(0.1), radius: 3)
+                        }
+                        
+                        // Apple Sign In
+                        SignInWithAppleButton(
+                            onRequest: { request in
+                                request.requestedScopes = [.fullName, .email]
+                            },
+                            onCompletion: { result in
+                                Task {
+                                    do {
+                                        try await authManager.signInWithApple()
+                                    } catch {
+                                        showError = true
+                                        errorMessage = error.localizedDescription
+                                    }
+                                }
+                            }
+                        )
+                        .frame(width: geometry.size.width * 0.8, height: 50)
+                        .cornerRadius(10)
+                    }
                 }
-                .padding(.all, 10)
+                .padding(.horizontal)
             }
         }
-        .edgesIgnoringSafeArea(.all) // Ekranın kenarlarına kadar uzanmasını sağlarız
+        .alert("Hata", isPresented: $showError) {
+            Button("Tamam", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+    }
+}
+
+// Custom TextField Style
+struct CustomTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(15)
+            .background(Color.white)
+            .cornerRadius(10)
+            .shadow(color: .black.opacity(0.1), radius: 3)
     }
 }
 
@@ -106,4 +192,69 @@ struct SignInButtonView: View {
 
 #Preview {
     LoginPageView()
+}
+
+
+struct OnboardingView: View {
+    @State var onboardingState: Int = 0
+    
+    var body: some View {
+        ZStack{
+            //content
+            
+            //buttons
+            VStack(spacing: 15){
+               
+                bottomButton(text:SignInLogo().googleText ,logo: SignInLogo().withGoogle )
+                   
+                bottomButton(text:SignInLogo().emailText,logo: SignInLogo().withEmail)
+            
+                bottomButton(text:SignInLogo().appleText,logo: SignInLogo().withApple)
+                
+                
+            }.padding(.vertical, 30)
+        }
+    }
+}
+
+
+extension OnboardingView {
+     func bottomButton( text: String,logo: Image) -> some View {
+        HStack {
+           
+            
+            Text(text)
+                .font(.headline)
+                .foregroundColor(.gray)
+            
+            Text("ile Giriş Yap")
+                .font(.headline)
+                .foregroundStyle(.gray)
+                
+            
+            logo
+                .resizable()
+                .frame(width: 30, height: 25)
+                .padding(.horizontal, 10)
+        }
+        .frame(height: 55)
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .cornerRadius(20)
+        .onTapGesture {
+            
+        }
+     }
+}
+
+
+struct SignInLogo {
+    var googleText: String = "Google"
+    var emailText: String = "Email"
+    var appleText: String = "Apple"
+    
+    var withGoogle: Image = Image("googleLogo")
+    var withEmail: Image = Image("emailLogo")
+     var withApple: Image = Image("appleLogo")
+    
 }

@@ -68,35 +68,37 @@ struct ProfileView: View {
                     .padding(.horizontal)
                     
                     // Buttons
-                    Button(action: {
-                        isEditing.toggle()
-                    }) {
-                        HStack {
-                            Image(systemName: "pencil")
-                            Text("Profili Düzenle")
+                    VStack(spacing: 20) {
+                        Button(action: {
+                            isEditing.toggle()
+                        }) {
+                            HStack {
+                                Image(systemName: "pencil")
+                                Text("Profili Düzenle")
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue.opacity(0.5))
+                            .cornerRadius(10)
                         }
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.blue.opacity(0.5))
-                        .cornerRadius(10)
+                        
+                        Button(action: {
+                            showingLogoutAlert = true
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.right.square")
+                                Text("Çıkış Yap")
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.red.opacity(0.5))
+                            .cornerRadius(10)
+                        }
                     }
                     .padding(.horizontal)
-                    
-                    Button(action: {
-                        showingLogoutAlert = true
-                    }) {
-                        HStack {
-                            Image(systemName: "arrow.right.square")
-                            Text("Çıkış Yap")
-                        }
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.5))
-                        .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
+                    .padding(.vertical, 10)
                 }
                 .padding(.bottom, 30)
             }

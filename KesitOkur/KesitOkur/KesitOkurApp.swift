@@ -13,18 +13,23 @@ import FirebaseCore
 
 @main
 struct KesitOkurApp: App {
+    @StateObject private var authManager = AuthManager()
     @StateObject private var favoritesManager = FavoritesManager()
     
     init() {
-           FirebaseApp.configure()
-       }
+        FirebaseApp.configure()
+    }
     
     var body: some Scene {
         WindowGroup {
-            NavigationView{
+            if authManager.isAuthenticated {
+                MainScreenView()
+                    .environmentObject(favoritesManager)
+                    .environmentObject(authManager)
+            } else {
                 LoginPageView()
+                    .environmentObject(authManager)
             }
-            .environmentObject(favoritesManager)
         }
     }
 }
