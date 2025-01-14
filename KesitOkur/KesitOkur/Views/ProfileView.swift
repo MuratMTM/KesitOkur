@@ -85,6 +85,22 @@ struct ProfileView: View {
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
+                    
+                    if authManager.isAdmin {
+                        Button(action: {
+                            // Navigate to admin interface
+                        }) {
+                            HStack {
+                                Image(systemName: "gear")
+                                Text("Yönetici Paneli")
+                            }
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.blue.opacity(0.5))
+                            .cornerRadius(10)
+                        }
+                    }
                 }
                 .padding(.bottom, 30)
             }

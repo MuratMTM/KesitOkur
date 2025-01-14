@@ -163,7 +163,7 @@ struct BookInfoView: View {
                 .font(.headline)
                 .bold()
                 .foregroundColor(.black)
-                .lineLimit(2)
+                .lineLimit(3)
                 .shadow(color: .black.opacity(0.2), radius: 0.5)
             
             Text(book.authorName)
@@ -208,6 +208,7 @@ struct FavoriteButton: View {
 
 struct BookDetailView: View {
     let book: Book
+    @State private var showExcerpts = false
     @EnvironmentObject var favoritesManager: FavoritesManager
     
     var body: some View {
@@ -252,10 +253,29 @@ struct BookDetailView: View {
                     
                     FavoriteButton(book: book)
                         .padding()
+                    
+                    Button(action: {
+                                           showExcerpts = true
+                                       }) {
+                                           HStack {
+                                               Image(systemName: "text.quote")
+                                               Text("Alıntılar")
+                                           }
+                                           .frame(maxWidth: .infinity)
+                                           .padding()
+                                           .background(Color.black)
+                                           .foregroundColor(.white)
+                                           .cornerRadius(10)
+                                           .padding(.horizontal)
+                                       }
+                                       .padding(.top)
                 }
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showExcerpts) {
+                    ExcerptsView(book: book)
+                }
     }
 }
 

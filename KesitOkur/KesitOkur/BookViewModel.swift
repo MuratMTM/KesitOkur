@@ -1,14 +1,17 @@
 import Foundation
 import Firebase
+import FirebaseStorage
 
 // Firestore'dan kitapları çeken ViewModel
 class BooksViewModel: ObservableObject {
     @Published var books: [Book] = []
     @Published var isLoading: Bool = false
+    @Published var errorMessage: String?
     
     func fetchBooks() {
         isLoading = true
-        let db = Firestore.firestore()
+        private let db = Firestore.firestore()
+        private let storage = Storage.storage()
         
         db.collection("books").getDocuments { (snapshot, error) in
             DispatchQueue.main.async {
@@ -16,7 +19,7 @@ class BooksViewModel: ObservableObject {
             }
             
             if let error = error {
-                print("Veri çekme hatası: \(error.localizedDescription)")
+                self.errorMessage = "Veri çekme hatası: \(error.localizedDescription)"
                 return
             }
             
@@ -33,7 +36,8 @@ class BooksViewModel: ObservableObject {
                         publishYear: data["publishYear"] as? String ?? "",
                         edition: data["edition"] as? String ?? "",
                         pages: data["pages"] as? String ?? "",
-                        description: data["description"] as? String ?? ""
+                        description: data["description"] as? String ?? "",
+                        excerpts: data["excerpts"] as? [String] ?? []
                     )
                 }
             }

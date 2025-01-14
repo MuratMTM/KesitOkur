@@ -10,6 +10,7 @@ struct Book: Identifiable, Hashable {
     let edition: String
     let pages: String
     let description: String
+    let excerpts: [String] // URLs for excerpt images stored in Firebase Storage
     
     // Implement hash function
     func hash(into hasher: inout Hasher) {

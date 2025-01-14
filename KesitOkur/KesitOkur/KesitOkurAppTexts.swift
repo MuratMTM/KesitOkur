@@ -11,8 +11,8 @@ struct KesitOkurAppLoginPageTexts {
     let booksImageText: String = "books"
     let profilePhotoImageText: String = "profilePhoto"
     let appNameText: String = "KesitOkur"
-    let usernameBoxText: String = "username"
-    let passwordBoxText: String = "password"
+    let usernameBoxText: String = "Kullanıcı Adı"
+    let passwordBoxText: String = "Şifre"
     let forgotPasswordText: String = "Şİfremi Unuttum?"
     let signInButtonText: String = "Giriş Yap"
     

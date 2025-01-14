@@ -115,6 +115,7 @@ struct LoginPageView: View {
                                     .frame(width: 20, height: 20)
                                 Text("Google ile Devam Et")
                                     .font(.headline)
+                                
                             }
                             .frame(width: geometry.size.width * 0.8, height: 50)
                             .background(Color.white)

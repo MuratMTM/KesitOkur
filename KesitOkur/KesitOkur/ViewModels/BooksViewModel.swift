@@ -1,6 +1,7 @@
 import Foundation
 import Firebase
 import FirebaseFirestore
+import FirebaseStorage
 
 class BooksViewModel: ObservableObject {
     @Published var books: [Book] = []
@@ -8,6 +9,7 @@ class BooksViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private let db = Firestore.firestore()
+    private let storage = Storage.storage()
     
     func fetchBooks() {
         isLoading = true
@@ -21,7 +23,6 @@ class BooksViewModel: ObservableObject {
                 
                 if let error = error {
                     self.errorMessage = "Veri çekme hatası: \(error.localizedDescription)"
-                    print(self.errorMessage ?? "")
                     return
                 }
                 
@@ -40,7 +41,8 @@ class BooksViewModel: ObservableObject {
                         publishYear: data["publishYear"] as? String ?? "",
                         edition: data["edition"] as? String ?? "",
                         pages: data["pages"] as? String ?? "",
-                        description: data["description"] as? String ?? ""
+                        description: data["description"] as? String ?? "",
+                        excerpts: data["excerpts"] as? [String] ?? []
                     )
                 }
             }
