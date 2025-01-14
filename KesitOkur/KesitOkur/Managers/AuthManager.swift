@@ -2,6 +2,7 @@ import Foundation
 import FirebaseAuth
 import GoogleSignIn
 import AuthenticationServices
+import FirebaseFirestore
 
 class AuthManager: ObservableObject {
     @Published var user: User?
@@ -107,6 +108,33 @@ class AuthManager: ObservableObject {
             DispatchQueue.main.async {
                 self.user = nil
                 self.isAuthenticated = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+            throw error
+        }
+    }
+    
+    // Sign Up
+    func signUp(email: String, password: String, firstName: String, lastName: String, birthDate: Date) async throws {
+        do {
+            let result = try await Auth.auth().createUser(withEmail: email, password: password)
+            
+            // Create user profile in Firestore
+            let db = Firestore.firestore()
+            try await db.collection("users").document(result.user.uid).setData([
+                "firstName": firstName,
+                "lastName": lastName,
+                "email": email,
+                "birthDate": birthDate,
+                "createdAt": Date()
+            ])
+            
+            DispatchQueue.main.async {
+                self.user = result.user
+                self.isAuthenticated = true
             }
         } catch {
             DispatchQueue.main.async {

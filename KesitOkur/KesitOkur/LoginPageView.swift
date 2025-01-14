@@ -10,16 +10,19 @@ struct LoginPageView: View {
     @State private var password: String = ""
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showingSignUp = false
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Background
+                Spacer()
                 Image(KesitOkurAppLoginPageTexts().booksImageText)
                     .resizable()
                     .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .ignoresSafeArea()
+                    .padding(.top)
                 
                 VStack(spacing: 25) {
                     // Profile Image and App Name
@@ -78,10 +81,22 @@ struct LoginPageView: View {
                     }
                     .foregroundColor(.black.opacity(0.3))
                     .frame(width: geometry.size.width * 0.8)
-                    .padding(.vertical)
+                  
                     
                     // Social Login Buttons
                     VStack(spacing: 15) {
+                        
+                        Button(action: {
+                            showingSignUp = true
+                        }) {
+                            Text("Kayıt Ol")
+                                .frame(width: geometry.size.width * 0.8, height: 50)
+                                .background(Color.black)
+                                .foregroundColor(.white)
+                                .cornerRadius(10)
+                                .font(.headline)
+                        }
+                        
                         // Google Sign In
                         Button(action: {
                             Task {
@@ -127,14 +142,20 @@ struct LoginPageView: View {
                         .frame(width: geometry.size.width * 0.8, height: 50)
                         .cornerRadius(10)
                     }
+                    
+                   
                 }
                 .padding(.horizontal)
             }
-        }
+        }.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
         .alert("Hata", isPresented: $showError) {
             Button("Tamam", role: .cancel) { }
         } message: {
             Text(errorMessage)
+        }
+        .sheet(isPresented: $showingSignUp) {
+            SignUpView()
+                .environmentObject(authManager)
         }
     }
 }
