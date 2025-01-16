@@ -1,5 +1,5 @@
 import SwiftUI
-import PhotosUI
+import UIKit
 import FirebaseStorage
 import FirebaseFirestore
 
@@ -7,6 +7,7 @@ struct AdminBookView: View {
     let book: Book
     @StateObject private var viewModel = AdminBookViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var showImagePicker = false
     
     var body: some View {
         NavigationView {
@@ -24,13 +25,17 @@ struct AdminBookView: View {
                         
                         // Current Excerpts
                         if !book.excerpts.isEmpty {
-                            ExcerptsList(excerpts: book.excerpts, onDelete: viewModel.deleteExcerpt)
+                            ExcerptsList(excerpts: book.excerpts) { url in
+                                Task {
+                                    await viewModel.deleteExcerpt(url)
+                                }
+                            }
                         }
                         
-                        // Add New Excerpts
-                        PhotosPicker(selection: $viewModel.selectedItems,
-                                   maxSelectionCount: 10,
-                                   matching: .images) {
+                        // Add New Excerpts Button (iOS 15.4 compatible)
+                        Button(action: {
+                            showImagePicker = true
+                        }) {
                             AddExcerptsButton()
                         }
                         
@@ -53,9 +58,50 @@ struct AdminBookView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "Bir hata oluştu")
             }
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(selectedImages: $viewModel.selectedImages)
+            }
         }
         .onAppear {
             viewModel.setCurrentBook(book)
+        }
+    }
+}
+
+// Custom ImagePicker for iOS 15.4
+struct ImagePicker: UIViewControllerRepresentable {
+    @Binding var selectedImages: [UIImage]
+    @Environment(\.dismiss) private var dismiss
+    
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.delegate = context.coordinator
+        picker.sourceType = .photoLibrary
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ImagePicker
+        
+        init(_ parent: ImagePicker) {
+            self.parent = parent
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.selectedImages.append(image)
+            }
+            parent.dismiss()
+        }
+        
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }
@@ -97,9 +143,9 @@ struct ExcerptsList: View {
                 .font(.headline)
             
             ForEach(excerpts, id: \.self) { excerpt in
-                ExcerptRow(imageURL: excerpt, onDelete: {
+                ExcerptRow(imageURL: excerpt) {
                     onDelete(excerpt)
-                })
+                }
             }
         }
     }
@@ -108,11 +154,13 @@ struct ExcerptsList: View {
 struct ExcerptRow: View {
     let imageURL: String
     let onDelete: () -> Void
+    @State private var isDeleting = false
     
     var body: some View {
         HStack {
             AsyncImage(url: URL(string: imageURL)) { image in
-                image.resizable()
+                image
+                    .resizable()
                     .scaledToFit()
                     .frame(height: 60)
             } placeholder: {
@@ -121,10 +169,18 @@ struct ExcerptRow: View {
             
             Spacer()
             
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .foregroundColor(.red)
+            Button {
+                onDelete()
+            } label: {
+                if isDeleting {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                } else {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
             }
+            .disabled(isDeleting)
         }
         .padding()
         .background(Color.white.opacity(0.9))
@@ -143,5 +199,4 @@ struct AddExcerptsButton: View {
         .background(Color.black)
         .foregroundColor(.white)
         .cornerRadius(10)
-    }
-} 
+    } 

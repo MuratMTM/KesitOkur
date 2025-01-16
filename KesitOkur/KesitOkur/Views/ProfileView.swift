@@ -6,6 +6,7 @@ struct ProfileView: View {
     @State private var isEditing = false
     @State private var showingLogoutAlert = false
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authManager: AuthManager
     
     var body: some View {
         ZStack {
@@ -87,9 +88,7 @@ struct ProfileView: View {
                     .padding(.horizontal)
                     
                     if authManager.isAdmin {
-                        Button(action: {
-                            // Navigate to admin interface
-                        }) {
+                        NavigationLink(destination: AdminBooksListView()) {
                             HStack {
                                 Image(systemName: "gear")
                                 Text("Yönetici Paneli")
@@ -100,6 +99,7 @@ struct ProfileView: View {
                             .background(Color.blue.opacity(0.5))
                             .cornerRadius(10)
                         }
+                        .padding(.horizontal)
                     }
                 }
                 .padding(.bottom, 30)

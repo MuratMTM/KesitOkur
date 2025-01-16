@@ -59,6 +59,7 @@
 		25E5F62A2D37089700F47288 /* Users.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E5F6292D37089700F47288 /* Users.swift */; };
 		25E5F62C2D3708C900F47288 /* AdminBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E5F62B2D3708C900F47288 /* AdminBookView.swift */; };
 		25E5F62E2D37090E00F47288 /* AdminViewBookModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25E5F62D2D37090E00F47288 /* AdminViewBookModel.swift */; };
+		25F4F1C52D399C99009C08F5 /* AdminBookListVİew.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F4F1C42D399C99009C08F5 /* AdminBookListVİew.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +90,7 @@
 		25E5F6292D37089700F47288 /* Users.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Users.swift; sourceTree = "<group>"; };
 		25E5F62B2D3708C900F47288 /* AdminBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminBookView.swift; sourceTree = "<group>"; };
 		25E5F62D2D37090E00F47288 /* AdminViewBookModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminViewBookModel.swift; sourceTree = "<group>"; };
+		25F4F1C42D399C99009C08F5 /* AdminBookListVİew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AdminBookListVİew.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +170,7 @@
 				2582ED0F2D32E4D300C9FB74 /* SearchView.swift */,
 				253165872D35A41E004CEA53 /* AuthManager.swift */,
 				25E5F6242D36F58000F47288 /* SignUpView.swift */,
+				25F4F1C42D399C99009C08F5 /* AdminBookListVİew.swift */,
 				25E5F6292D37089700F47288 /* Users.swift */,
 				2582ED112D32F29800C9FB74 /* CustomColor.swift */,
 				25E5F62D2D37090E00F47288 /* AdminViewBookModel.swift */,
@@ -307,6 +310,7 @@
 				25B5544B2D2C3C1D00ADB13F /* UploadDataToFirestore.swift in Sources */,
 				2582ED122D32F29800C9FB74 /* CustomColor.swift in Sources */,
 				255042EA2D28053B00A668DA /* KesitOkurAppTexts.swift in Sources */,
+				25F4F1C52D399C99009C08F5 /* AdminBookListVİew.swift in Sources */,
 				25E5F62C2D3708C900F47288 /* AdminBookView.swift in Sources */,
 				25E5F6282D3706F100F47288 /* ExcerptsView.swift in Sources */,
 				25D5E3742BAB719E00042FF2 /* WelcomeView.swift in Sources */,

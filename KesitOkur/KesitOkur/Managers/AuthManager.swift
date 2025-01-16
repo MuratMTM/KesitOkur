@@ -8,12 +8,34 @@ class AuthManager: ObservableObject {
     @Published var user: User?
     @Published var isAuthenticated = false
     @Published var errorMessage: String?
+    @Published var isAdmin = false
+    
+    private var stateListener: AuthStateDidChangeListenerHandle?
     
     init() {
-        // Listen for auth state changes
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        stateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.user = user
             self?.isAuthenticated = user != nil
+            
+            // Check admin status when user changes
+            if let userId = user?.uid {
+                self?.checkAdminStatus(userId: userId)
+            } else {
+                self?.isAdmin = false
+            }
+        }
+    }
+    
+    // Add this method to check admin status
+    private func checkAdminStatus(userId: String) {
+        let db = Firestore.firestore()
+        db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
+            if let data = snapshot?.data(),
+               let isAdmin = data["isAdmin"] as? Bool {
+                DispatchQueue.main.async {
+                    self?.isAdmin = isAdmin
+                }
+            }
         }
     }
     
@@ -129,12 +151,14 @@ class AuthManager: ObservableObject {
                 "lastName": lastName,
                 "email": email,
                 "birthDate": birthDate,
-                "createdAt": Date()
+                "createdAt": Date(),
+                "isAdmin": false
             ])
             
             DispatchQueue.main.async {
                 self.user = result.user
                 self.isAuthenticated = true
+                self.isAdmin = false
             }
         } catch {
             DispatchQueue.main.async {

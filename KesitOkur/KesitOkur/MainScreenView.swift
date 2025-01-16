@@ -4,6 +4,8 @@ import Firebase
 struct MainScreenView: View {
     @StateObject private var viewModel = BooksViewModel()
     @EnvironmentObject var favoritesManager: FavoritesManager
+    @EnvironmentObject var authManager: AuthManager
+    
     
     init() {
         // Hide the navigation bar when scrolling
@@ -21,12 +23,14 @@ struct MainScreenView: View {
         let tabBarAppearance = UITabBarAppearance()
         tabBarAppearance.configureWithDefaultBackground()
         tabBarAppearance.backgroundColor = UIColor(Color(red: 1, green: 0.85, blue: 0.4))
+    
         
         // Configure TabBar items colors with shadow
         let shadow = NSShadow()
         shadow.shadowColor = UIColor.black.withAlphaComponent(0.3)
         shadow.shadowOffset = CGSize(width: 0, height: 1)
         shadow.shadowBlurRadius = 3
+        
         
         let textAttributes: [NSAttributedString.Key: Any] = [
             .foregroundColor: UIColor.black,
@@ -37,7 +41,6 @@ struct MainScreenView: View {
         tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = textAttributes
         tabBarAppearance.stackedLayoutAppearance.selected.iconColor = .black
         tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = textAttributes
-        
         UITabBar.appearance().standardAppearance = tabBarAppearance
         UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
     }
@@ -90,6 +93,7 @@ struct MainScreenView: View {
             // Profile Tab
             NavigationView {
                 ProfileView()
+                    .environmentObject(authManager)
             }
             .tabItem {
                 Image(systemName: "person.fill")
@@ -104,13 +108,13 @@ struct MainScreenView: View {
 }
 
 // Separate the book list into its own view for better organization
-struct BookListView: View {
-    let books: [Book]
-    @EnvironmentObject var favoritesManager: FavoritesManager
+    struct BookListView: View {
+        let books: [Book]
+        @EnvironmentObject var favoritesManager: FavoritesManager
     
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
+        var body: some View {
+            ScrollView {
+                VStack(spacing: 20) {
                 ForEach(books) { book in
                     BookCardView(book: book)
                 }
@@ -156,7 +160,6 @@ struct BookCardView: View {
 // Separate book info into its own view
 struct BookInfoView: View {
     let book: Book
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(book.bookName)
@@ -194,7 +197,6 @@ struct BookInfoView: View {
 struct FavoriteButton: View {
     let book: Book
     @EnvironmentObject private var favoritesManager: FavoritesManager
-    
     var body: some View {
         Button(action: {
             favoritesManager.toggleFavorite(book: book)

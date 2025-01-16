@@ -57,5 +57,18 @@ struct ExcerptsView: View {
     }
 }
 #Preview {
-    ExcerptsView()
+    ExcerptsView(book:Book(
+        id: "1",
+        bookCover: "https://example.com/cover.jpg",
+        bookName: "Sample Book",
+        authorName: "Sample Author",
+        publishYear: "2024",
+        edition: "1",
+        pages: "200",
+        description: "Sample description",
+        excerpts: [
+            "https://example.com/excerpt1.jpg",
+            "https://example.com/excerpt2.jpg"
+        ]
+    ))
 }

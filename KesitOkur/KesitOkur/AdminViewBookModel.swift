@@ -5,7 +5,7 @@ import FirebaseFirestore
 
 @MainActor
 class AdminBookViewModel: ObservableObject {
-    @Published var selectedItems: [PhotosPickerItem] = []
+    @Published var selectedImages: [UIImage] = []
     @Published var isUploading = false
     @Published var showError = false
     @Published var errorMessage: String?
@@ -18,10 +18,10 @@ class AdminBookViewModel: ObservableObject {
         self.currentBook = book
     }
     
-    func deleteExcerpt(_ excerptURL: String) {
+    func deleteExcerpt(_ excerptURL: String) async {
         guard let book = currentBook else { return }
         
-        Task {
+        
             do {
                 // Delete from Storage
                 let storageRef = storage.reference(forURL: excerptURL)
@@ -38,19 +38,19 @@ class AdminBookViewModel: ObservableObject {
                 showError = true
                 errorMessage = error.localizedDescription
             }
-        }
+        
     }
     
-    func uploadExcerpts() {
+    func uploadExcerpts() async {
         guard let book = currentBook else { return }
         isUploading = true
         
-        Task {
+        
             do {
                 var uploadedURLs: [String] = []
                 
-                for item in selectedItems {
-                    if let data = try await item.loadTransferable(type: Data.self) {
+                for image in selectedImages {
+                    if let imageData = image.jpegData(compressionQuality: 0.7) {
                         let storageRef = storage.reference()
                             .child("books")
                             .child(book.id)
@@ -60,7 +60,7 @@ class AdminBookViewModel: ObservableObject {
                         let metadata = StorageMetadata()
                         metadata.contentType = "image/jpeg"
                         
-                        let _ = try await storageRef.putDataAsync(data, metadata: metadata)
+                        let _ = try await storageRef.putDataAsync(imageData, metadata: metadata)
                         let url = try await storageRef.downloadURL()
                         uploadedURLs.append(url.absoluteString)
                     }
@@ -72,13 +72,13 @@ class AdminBookViewModel: ObservableObject {
                     "excerpts": updatedExcerpts
                 ])
                 
-                selectedItems = []
+                selectedImages = []
                 isUploading = false
             } catch {
                 isUploading = false
                 showError = true
                 errorMessage = error.localizedDescription
             }
-        }
+        
     }
 }
