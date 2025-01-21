@@ -68,95 +68,70 @@ class AuthManager: ObservableObject {
     }
     
     func signInWithGoogle() {
-        Task {
+        Task { @MainActor in
             do {
-                guard let clientID = FirebaseApp.app()?.options.clientID else {
-                    self.errorMessage = "Error getting client ID"
-                    return
-                }
-                
-                let config = GIDConfiguration(clientID: clientID)
-                GIDSignIn.sharedInstance.configuration = config
-                
-                guard let topVC = await getTopViewController() else {
-                    self.errorMessage = "Could not get top view controller"
-                    return
-                }
-                
-                let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { continuation in
-                    DispatchQueue.main.async {
-                        GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { result, error in
-                            if let error = error {
-                                continuation.resume(throwing: error)
-                                return
-                            }
-                            guard let result = result else {
-                                continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
-                                return
-                            }
-                            continuation.resume(returning: result)
-                        }
-                    }
-                }
-                
-                // Add additional validation for ID token
-                guard let idToken = userResult.user.idToken?.tokenString else {
-                    throw NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid or expired ID token"])
-                }
-                
-                let credential = GoogleAuthProvider.credential(
-                    withIDToken: idToken,
-                    accessToken: userResult.user.accessToken.tokenString
-                )
-                
-                // Add retry mechanism for credential sign-in
-                do {
-                    let authResult = try await Auth.auth().signIn(with: credential)
-                    await MainActor.run {
-                        self.user = authResult.user
-                        self.isAuthenticated = true
-                    }
-                } catch {
-                    // Specific handling for credential-related errors
-                    if let authError = error as NSError?,
-                       authError.domain == "FIRAuthErrorDomain",
-                       authError.code == AuthErrorCode.invalidCredential.rawValue {
-                        // Attempt re-authentication or prompt user to sign in again
-                        self.errorMessage = "Authentication failed. Please try signing in again."
-                    } else {
-                        self.errorMessage = error.localizedDescription
-                    }
-                    throw error
-                }
-                
+                try await performGoogleSignIn()
             } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    print("Google Sign-In Error: \(error.localizedDescription)")
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func performGoogleSignIn() async throws {
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            throw NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Client ID not found"])
+        }
+        
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+        
+        let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
+            GIDSignIn.sharedInstance.signIn(withPresenting: getRootViewController()) { result, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
                 }
+                
+                guard let signInResult = result else {
+                    continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
+                    return
+                }
+                
+                continuation.resume(returning: signInResult)
             }
         }
-    }
-    
-    private func getTopViewController() async -> UIViewController? {
+        
+        // Validate ID token
+        guard let idToken = result.user.idToken?.tokenString else {
+            throw NSError(domain: "GoogleSignIn", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid ID token"])
+        }
+        
+        let credential = GoogleAuthProvider.credential(
+            withIDToken: idToken,
+            accessToken: result.user.accessToken.tokenString
+        )
+        
+        let authResult = try await Auth.auth().signIn(with: credential)
+        
         await MainActor.run {
-            let scenes = UIApplication.shared.connectedScenes
-            let windowScene = scenes.first as? UIWindowScene
-            let window = windowScene?.windows.first
-            
-            guard let rootVC = window?.rootViewController else {
-                return nil
-            }
-            
-            var topVC = rootVC
-            while let presentedVC = topVC.presentedViewController {
-                topVC = presentedVC
-            }
-            return topVC
+            self.user = authResult.user
+            self.isAuthenticated = true
         }
     }
+
+ 
+
+    // Helper method to get root view controller
+    private func getRootViewController() -> UIViewController {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = scene.windows.first?.rootViewController else {
+            return UIViewController()
+        }
+        
+        return rootViewController
+    }
     
-    // Sign in with Apple
+    //Sign-In with Apple
     func signInWithApple() async throws {
         let nonce = randomNonceString()
         let appleIDProvider = ASAuthorizationAppleIDProvider()
@@ -183,40 +158,77 @@ class AuthManager: ObservableObject {
             }
             
             let credential = OAuthProvider.credential(
-                providerID:.apple,
-                    idToken: idTokenString,
-                    rawNonce: nonce,
-                    accessToken: nil
+                providerID: .apple,
+                idToken: idTokenString,
+                rawNonce: nonce
             )
             
-            do {
-                let authResult = try await Auth.auth().signIn(with: credential)
+            let authResult = try await Auth.auth().signIn(with: credential)
+            let firebaseUser = authResult.user
+            
+            // Create profile change request
+            let changeRequest = firebaseUser.createProfileChangeRequest()
+            
+            // Update display name if full name is available
+            if let fullName = appleIDCredential.fullName {
+                let displayName = [fullName.givenName, fullName.familyName]
+                    .compactMap { $0 }
+                    .joined(separator: " ")
                 
-                // Update user profile if name is provided
-                if let fullName = appleIDCredential.fullName {
-                    let changeRequest = authResult.user.createProfileChangeRequest()
-                    changeRequest.displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")"
-                    try await changeRequest.commitChanges()
-                }
-                
-                self.user = authResult.user
-                self.isAuthenticated = true
-                
-            } catch {
-                // Handle specific credential errors
-                if let authError = error as NSError?,
-                   authError.domain == "FIRAuthErrorDomain",
-                   authError.code == AuthErrorCode.invalidCredential.rawValue {
-                    self.errorMessage = "Invalid or expired authentication. Please try again."
-                } else {
-                    self.errorMessage = error.localizedDescription
-                }
-                throw error
+                changeRequest.displayName = displayName
             }
+            
+            // Commit profile changes
+            try await changeRequest.commitChanges()
+            
+            // Save user information to Firestore
+            try await saveAppleUserToFirestore(
+                user: firebaseUser,
+                fullName: appleIDCredential.fullName,
+                email: appleIDCredential.email
+            )
+            
+            // Update local state
+            self.user = firebaseUser
+            self.isAuthenticated = true
+            
         } catch {
-            self.errorMessage = error.localizedDescription
+            // Detailed error handling
+            if let authError = error as NSError?,
+               authError.domain == "FIRAuthErrorDomain",
+               authError.code == AuthErrorCode.invalidCredential.rawValue {
+                self.errorMessage = "Invalid or expired authentication. Please try again."
+            } else {
+                self.errorMessage = error.localizedDescription
+            }
             throw error
         }
+    }
+
+    // Helper method to save Apple user details to Firestore
+    private func saveAppleUserToFirestore(
+        user: User,
+        fullName: PersonNameComponents?,
+        email: String?
+    ) async throws {
+        let db = Firestore.firestore()
+        let userRef = db.collection("users").document(user.uid)
+        
+        var userData: [String: Any] = [
+            "uid": user.uid,
+            "providerID": "apple.com"
+        ]
+        
+        if let fullName = fullName {
+            userData["firstName"] = fullName.givenName ?? ""
+            userData["lastName"] = fullName.familyName ?? ""
+        }
+        
+        if let email = email {
+            userData["email"] = email
+        }
+        
+        try await userRef.setData(userData, merge: true)
     }
     
     private func randomNonceString(length: Int = 32) -> String {

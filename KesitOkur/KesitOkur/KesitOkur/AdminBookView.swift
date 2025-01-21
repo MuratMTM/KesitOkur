@@ -1,4 +1,7 @@
 import SwiftUI
+import FirebaseAuth
+import GoogleSignIn
+import FirebaseCore
 import UIKit
 import FirebaseStorage
 import FirebaseFirestore
@@ -12,122 +15,41 @@ struct AdminBookView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                LinearGradient(gradient: Gradient(colors: [
-                    Color(red: 1, green: 0.85, blue: 0.4),
-                    Color.white
-                ]), startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+                backgroundGradient
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Book Infofunc signInWithGoogle() {
-                            Task {
-                                do {
-                                    guard let clientID = FirebaseApp.app()?.options.clientID else {
-                                        self.errorMessage = "Error getting client ID"
-                                        return
-                                    }
-                                    
-                                    let config = GIDConfiguration(clientID: clientID)
-                                    GIDSignIn.sharedInstance.configuration = config
-                                    
-                                    guard let topVC = await getTopViewController() else {
-                                        self.errorMessage = "Could not get top view controller"
-                                        return
-                                    }
-                                    
-                                    let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { continuation in
-                                        DispatchQueue.main.async {
-                                            GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { result, error in
-                                                if let error = error {
-                                                    continuation.resume(throwing: error)
-                                                    return
-                                                }
-                                                guard let result = result else {
-                                                    continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
-                                                    return
-                                                }
-                                                continuation.resume(returning: result)
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Add additional validation for ID token
-                                    guard let idToken = userResult.user.idToken?.tokenString else {
-                                        throw NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid or expired ID token"])
-                                    }
-                                    
-                                    let credential = GoogleAuthProvider.credential(
-                                        withIDToken: idToken,
-                                        accessToken: userResult.user.accessToken.tokenString
-                                    )
-                                    
-                                    // Add retry mechanism for credential sign-in
-                                    do {
-                                        let authResult = try await Auth.auth().signIn(with: credential)
-                                        await MainActor.run {
-                                            self.user = authResult.user
-                                            self.isAuthenticated = true
-                                        }
-                                    } catch {
-                                        // Specific handling for credential-related errors
-                                        if let authError = error as NSError?,
-                                           authError.domain == "FIRAuthErrorDomain",
-                                           authError.code == AuthErrorCode.invalidCredential.rawValue {
-                                            // Attempt re-authentication or prompt user to sign in again
-                                            self.errorMessage = "Authentication failed. Please try signing in again."
-                                        } else {
-                                            self.errorMessage = error.localizedDescription
-                                        }
-                                        throw error
-                                    }
-                                    
-                                } catch {
-                                    await MainActor.run {
-                                        self.errorMessage = error.localizedDescription
-                                        print("Google Sign-In Error: \(error.localizedDescription)")
-                                    }
-                                }
-                            }
-                        }
+                        // Google Sign-In Button
+                        googleSignInButton
+                        
+                        // Error Message
+                        errorMessageView
+                        
                         BookHeaderView(book: book)
                         
                         // Current Excerpts
-                        if !book.excerpts.isEmpty {
-                            ExcerptsList(excerpts: book.excerpts) { url in
-                                                           Task {
-                                                               await viewModel.deleteExcerpt(url)
-                                                           }
-                                                       }
-                        }
+                        excerptsList
                         
-                        // Add New Excerpts
-                        Button(action: {
-                                                   showImagePicker = true
-                                               }) {
-                            AddExcerptsButton()
-                        }
+                        // Add New Excerpts Button
+                        addExcerptsButton
                         
-                        if viewModel.isUploading {
-                            ProgressView("Yükleniyor...")
-                        }
+                        // Upload Progress
+                        uploadProgressView
                     }
                     .padding()
                 }
             }
-            .navigationTitle("Alıntı Yönetimi")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("İptal") { dismiss() }
-                }
+            .navigationConfiguration {
+                dismiss()
             }
-            .alert("Hata", isPresented: $viewModel.showError) {
-                Button("Tamam", role: .cancel) { }
-            } message: {
-                Text(viewModel.errorMessage ?? "Bir hata oluştu")
-            }.sheet(isPresented: $showImagePicker) {
+            
+            .sheet(isPresented: $showImagePicker) {
                 ImagePicker(selectedImages: $viewModel.selectedImages)
+            }
+            .onChange(of: viewModel.selectedImages) { _ in
+                Task {
+                    await viewModel.uploadExcerpts(for: book)
+                }
             }
         }
         .onAppear {
@@ -135,7 +57,87 @@ struct AdminBookView: View {
         }
     }
     
+    // Background Gradient
+    private var backgroundGradient: some View {
+        LinearGradient(
+            gradient: Gradient(colors: [
+                Color(red: 1, green: 0.85, blue: 0.4),
+                Color.white
+            ]),
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .ignoresSafeArea()
+    }
+    
+    // Google Sign-In Button
+    private var googleSignInButton: some View {
+        Button("Google ile Giriş Yap") {
+            Task {
+                await viewModel.signInWithGoogle()
+            }
+        }
+        .padding()
+        .background(Color.blue)
+        .foregroundColor(.white)
+        .cornerRadius(10)
+    }
+    
+    // Error Message View
+    private var errorMessageView: some View {
+        Group {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+                    .padding()
+            }
+        }
+    }
+    
+    // Excerpts List
+    private var excerptsList: some View {
+        Group {
+            if !book.excerpts.isEmpty {
+                ExcerptsList(excerpts: book.excerpts) { url in
+                    Task {
+                        await viewModel.deleteExcerpt(url)
+                    }
+                }
+            }
+        }
+    }
+    
+    // Add Excerpts Button
+    private var addExcerptsButton: some View {
+        Button(action: {
+            showImagePicker = true
+        }) {
+            AddExcerptsButton()
+        }
+    }
+    
+    // Upload Progress View
+    private var uploadProgressView: some View {
+        Group {
+            if viewModel.isUploading {
+                ProgressView("Yükleniyor...")
+            }
+        }
+    }
+}
 
+// Navigation Configuration Extension
+extension View {
+    func navigationConfiguration(dismiss: @escaping () -> Void) -> some View {
+        self
+            .navigationTitle("Alıntı Yönetimi")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("İptal") { dismiss() }
+                }
+            }
+    }
 }
 
 struct ImagePicker: UIViewControllerRepresentable {
@@ -212,10 +214,9 @@ struct ExcerptsList: View {
                 .font(.headline)
             
             ForEach(excerpts, id: \.self) { excerpt in
-                ExcerptRow(imageURL: excerpt) {
-                                    onDelete(excerpt)
-                                }
-                                
+                ExcerptRow(imageURL: excerpt, onDelete: {
+                    onDelete(excerpt)
+                })
             }
         }
     }
@@ -240,52 +241,21 @@ struct ExcerptRow: View {
             Spacer()
             
             Button {
-                         onDelete()
-                      } label: {
-                          if isDeleting {
-                              ProgressView()
-                                  .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                onDelete()
+            } label: {
+                if isDeleting {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .red))
                 } else {
                     Image(systemName: "trash")
                         .foregroundColor(.red)
                 }
-                
-            }.disabled(isDeleting)
-                .padding()
-                .background(Color.white.opacity(0.9))
-                .cornerRadius(10)
-        }
-    }
-    
-    struct AddExcerptsButton: View {
-        var body: some View {
-            HStack {
-                Image(systemName: "plus.circle.fill")
-                Text("Yeni Alıntı Ekle")
             }
-            .frame(maxWidth: .infinity)
+            .disabled(isDeleting)
             .padding()
-            .background(Color.black)
-            .foregroundColor(.white)
+            .background(Color.white.opacity(0.9))
             .cornerRadius(10)
         }
-    }
-    
-    #Preview {
-        AdminBookView(book: Book(
-            id: "1",
-            bookCover: "https://example.com/cover.jpg",
-            bookName: "Sample Book",
-            authorName: "Sample Author",
-            publishYear: "2024",
-            edition: "1",
-            pages: "200",
-            description: "Sample description",
-            excerpts: [
-                "https://example.com/excerpt1.jpg",
-                "https://example.com/excerpt2.jpg"
-            ]
-        ))
     }
 }
 
@@ -301,4 +271,21 @@ struct AddExcerptsButton: View {
         .foregroundColor(.white)
         .cornerRadius(10)
     }
+}
+
+#Preview {
+    AdminBookView(book: Book(
+        id: "1",
+        bookCover: "https://example.com/cover.jpg",
+        bookName: "Sample Book",
+        authorName: "Sample Author",
+        publishYear: "2024",
+        edition: "1",
+        pages: "200",
+        description: "Sample description",
+        excerpts: [
+            "https://example.com/excerpt1.jpg",
+            "https://example.com/excerpt2.jpg"
+        ]
+    ))
 }

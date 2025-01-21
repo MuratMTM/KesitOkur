@@ -11,7 +11,7 @@ class BooksViewModel: ObservableObject {
     func fetchBooks() {
         isLoading = true
          let db = Firestore.firestore()
-         let storage = Storage.storage()
+        _ = Storage.storage()
         
         db.collection("books").getDocuments { (snapshot, error) in
             DispatchQueue.main.async {

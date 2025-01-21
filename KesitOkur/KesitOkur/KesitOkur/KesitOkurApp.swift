@@ -21,54 +21,112 @@ import FirebaseAnalytics
 import FirebaseInAppMessaging
 import UserNotifications
 
+// Use a factory method instead of a class
+class AppCheckProviderFactoryImpl: NSObject, AppCheckProviderFactory{
+    func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
+#if DEBUG
+        return AppCheckDebugProvider(app: app)
+#else
+        return DeviceCheckProvider(app: app)
+#endif
+    }
+}
+
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
-                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         
         // Configure Firebase
         FirebaseApp.configure()
         
-        // Configure App Check for Production
-                #if DEBUG
-                let providerFactory = AppCheckDebugProviderFactory()
-                #else
-                let providerFactory = DeviceCheckProviderFactory()
-                #endif
-                AppCheck.setAppCheckProviderFactory(providerFactory)
+        // Configure App Check
+        let providerFactory = AppCheckProviderFactoryImpl()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        
+        // Configure Google Sign-In
+        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
+            if let error = error {
+                print("Error restoring Google Sign-In: \(error.localizedDescription)")
+            }
+        }
         
         return true
     }
     
     func application(_ app: UIApplication,
-                    open url: URL,
-                    options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+                     open url: URL,
+                     options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        // Handle Google Sign-In and other URL schemes
         return GIDSignIn.sharedInstance.handle(url)
     }
 }
 
 @main
 struct KesitOkurApp: App {
+    // Use UIApplicationDelegateAdaptor to integrate AppDelegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
+    // Optional: Environment object for authentication state
     @StateObject private var authManager = AuthManager()
-    @StateObject private var favoritesManager = FavoritesManager()
-    
-    // Register app delegate for Firebase setup
-    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    
-    init() {
-        // Verify Firebase configuration
-        guard AppConfig.firebaseApiKey != nil else {
-            fatalError("Firebase API Key not found. Ensure .env file is properly configured.")
-        }
-    }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(favoritesManager)
-                .environmentObject(authManager)
-                .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
-                }
+            // Conditional view based on authentication state
+            if authManager.isAuthenticated {
+                MainTabView()
+                    .environmentObject(authManager)
+            } else {
+                LoginView()
+                    .environmentObject(authManager)
+            }
         }
     }
 }
+
+
+// Optional: Main Tab View after Authentication
+struct MainTabView: View {
+    var body: some View {
+        TabView {
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+            
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person")
+                }
+            
+            // Add more tabs as needed
+        }
+    }
+}
+
+// Placeholder views - replace with your actual implementations
+struct HomeView: View {
+    var body: some View {
+        Text("Home View")
+    }
+}
+
+struct LoginView: View {
+    @EnvironmentObject var authManager: AuthManager
+    
+    var body: some View {
+        VStack {
+            Button("Sign In with Google") {
+                Task {
+                    await authManager.signInWithGoogle()
+                }
+            }
+            
+            Button("Sign In with Apple") {
+                Task {
+                    try? await authManager.signInWithApple()
+                }
+            }
+        }
+    }
+}
+

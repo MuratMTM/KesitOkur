@@ -139,7 +139,7 @@ struct ProfileView: View {
         }
         
         .sheet(isPresented: $isEditing) {
-            EditProfileView()
+            ProfileEditView()
         }
     }
 }
@@ -177,53 +177,93 @@ struct StatisticView: View {
     }
 }
 
-struct EditProfileView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var name = ""
-    @State private var email = ""
+struct ProfileEditView: View {
+    @StateObject private var authManager = AuthManager()
+    @State private var firstName: String
+    @State private var lastName: String
+    @State private var email: String
+    @State private var errorMessage: String?
+    @State private var emailVerificationSent = false
+    
+    init() {
+        let currentUser = Auth.auth().currentUser
+        _firstName = State(initialValue: currentUser?.displayName?.components(separatedBy: " ").first ?? "")
+        _lastName = State(initialValue: currentUser?.displayName?.components(separatedBy: " ").last ?? "")
+        _email = State(initialValue: currentUser?.email ?? "")
+    }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 1, green: 0.85, blue: 0.4),  // Warm yellow
-                        Color.white
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-                
-                VStack(spacing: 20) {
-                    TextField("Ad Soyad", text: $name)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
-                    TextField("E-posta", text: $email)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.emailAddress)
-                        .padding(.horizontal)
-                    
-                    Button("Kaydet") {
-                        // Handle save
-                        dismiss()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue.opacity(0.5))
-                    .cornerRadius(10)
-                    .padding(.horizontal)
-                }
-                .padding(.vertical)
+        Form {
+            TextField("First Name", text: $firstName)
+            TextField("Last Name", text: $lastName)
+            TextField("Email", text: $email)
+            
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
             }
-            .navigationTitle("Profili Düzenle")
-            .navigationBarItems(trailing: Button("İptal") {
-                dismiss()
-            })
+            
+            if emailVerificationSent {
+                Text("Email verification sent. Please check your email.")
+                    .foregroundColor(.green)
+            }
+            
+            Button("Save Profile") {
+                saveProfile()
+            }
         }
     }
+    
+    
+    private func saveProfile() {
+        Task { @MainActor in
+            guard let user = Auth.auth().currentUser else { return }
+            
+            do {
+                // Update Firebase Authentication profile
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = "\(firstName) \(lastName)"
+                try await changeRequest.commitChanges()
+                
+                // Update Firestore user document
+                let db = Firestore.firestore()
+                let userRef = db.collection("users").document(user.uid)
+                
+                try await userRef.updateData([
+                    "firstName": firstName,
+                    "lastName": lastName,
+                    "email": email
+                ])
+                
+                // Handle email update
+                if user.email != email {
+                    await handleEmailUpdate(user: user, newEmail: email)
+                }
+                
+                // Success handling
+                errorMessage = nil
+                
+            } catch {
+                errorMessage = error.localizedDescription
+                print("Error saving profile: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    private func handleEmailUpdate(user: User, newEmail: String) async {
+        do {
+            try await user.sendEmailVerification(beforeUpdatingEmail: newEmail)
+            
+            // Optional: Additional UI feedback
+            await MainActor.run {
+                emailVerificationSent = true
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = "Email verification failed: \(error.localizedDescription)"
+                emailVerificationSent = false
+            }
+        }
+    }
+    
 }
-
-
