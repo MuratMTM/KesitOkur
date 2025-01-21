@@ -6,46 +6,65 @@
 //
 
 import SwiftUI
+import Firebase
 import FirebaseCore
 import FirebaseAuth
+import GoogleSignIn
+import FirebaseAppCheck
 import FirebaseFirestore
 import FirebaseStorage
-import FirebaseMessaging
 import FirebaseCrashlytics
 import FirebasePerformance
 import FirebaseRemoteConfig
 import FirebaseDynamicLinks
-import FirebaseAppCheck
 import FirebaseAnalytics
 import FirebaseInAppMessaging
+import UserNotifications
 
-
-
+class AppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication,
+                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        
+        // Configure Firebase
+        FirebaseApp.configure()
+        
+        // Configure App Check
+        let providerFactory = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+        
+        return true
+    }
+    
+    func application(_ app: UIApplication,
+                    open url: URL,
+                    options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
+    }
+}
 
 @main
 struct KesitOkurApp: App {
     @StateObject private var authManager = AuthManager()
     @StateObject private var favoritesManager = FavoritesManager()
     
+    // Register app delegate for Firebase setup
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+    
     init() {
         // Verify Firebase configuration
         guard AppConfig.firebaseApiKey != nil else {
             fatalError("Firebase API Key not found. Ensure .env file is properly configured.")
         }
-        
-        FirebaseApp.configure()
     }
     
     var body: some Scene {
         WindowGroup {
-            if authManager.isAuthenticated {
-                MainScreenView()
-                    .environmentObject(favoritesManager)
-                    .environmentObject(authManager)
-            } else {
-                LoginPageView()
-                    .environmentObject(authManager)
-            }
+            ContentView()
+                .environmentObject(favoritesManager)
+                .environmentObject(authManager)
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
+                }
         }
     }
 }

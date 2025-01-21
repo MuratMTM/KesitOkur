@@ -5,56 +5,52 @@
 //  Created by Murat Işık on 13.01.2025.
 //
 
-
-
-import Foundation
+import SwiftUI
+import Firebase
 import FirebaseAuth
 import GoogleSignIn
-import AuthenticationServices
 import FirebaseCore
 import FirebaseFirestore
+import AuthenticationServices
 
+@MainActor
 class AuthManager: ObservableObject {
     @Published var user: User?
     @Published var isAuthenticated = false
     @Published var errorMessage: String?
     @Published var isAdmin = false
     
-    
-    
     private var stateListener: AuthStateDidChangeListenerHandle?
     
     init() {
+        setupAuthStateListener()
+    }
+    
+    private func setupAuthStateListener() {
         stateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            self?.user = user
-            self?.isAuthenticated = user != nil
-            
-            // Check admin status when user changes
-                       if let userId = user?.uid {
-                           self?.checkAdminStatus(userId: userId)
-                       } else {
-                           self?.isAdmin = false
-                       }
-                   }
-               }
-               
-               // Add this method to check admin status
-               private func checkAdminStatus(userId: String) {
-                   let db = Firestore.firestore()
-                   db.collection("users").document(userId).getDocument { [weak self] snapshot, error in
-                       if let data = snapshot?.data(),
-                          let isAdmin = data["isAdmin"] as? Bool {
-                           DispatchQueue.main.async {
-                               self?.isAdmin = isAdmin
-                           }
-                       }
+            Task { @MainActor in
+                self?.isAuthenticated = user != nil
+                self?.user = user
+                
+                if let userId = user?.uid {
+                    await self?.checkAdminStatus(userId: userId)
+                } else {
+                    self?.isAdmin = false
+                }
+            }
         }
     }
     
-    deinit {
-        // Remove the listener when the AuthManager is deallocated
-        if let handle = stateListener {
-            Auth.auth().removeStateDidChangeListener(handle)
+    private func checkAdminStatus(userId: String) async {
+        do {
+            let db = Firestore.firestore()
+            let document = try await db.collection("users").document(userId).getDocument()
+            if let data = document.data(),
+               let isAdmin = data["isAdmin"] as? Bool {
+                self.isAdmin = isAdmin
+            }
+        } catch {
+            self.errorMessage = error.localizedDescription
         }
     }
     
@@ -62,49 +58,86 @@ class AuthManager: ObservableObject {
     func signInWithEmail(email: String, password: String) async throws {
         do {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
-            DispatchQueue.main.async {
-                self.user = result.user
-                self.isAuthenticated = true
-            }
+            self.user = result.user
+            self.isAuthenticated = true
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            self.errorMessage = error.localizedDescription
             throw error
         }
     }
     
-    // Google Sign In
-    func signInWithGoogle() async throws {
-        guard let clientID = FirebaseApp.app()?.options.clientID else { return }
-        let config = GIDConfiguration(clientID: clientID)
-        GIDSignIn.sharedInstance.configuration = config
-        
-        guard let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = await windowScene.windows.first,
-              let rootViewController = await window.rootViewController else {
-            return
+    func signInWithGoogle() {
+        Task {
+            do {
+                guard let clientID = FirebaseApp.app()?.options.clientID else {
+                    self.errorMessage = "Error getting client ID"
+                    return
+                }
+                
+                let config = GIDConfiguration(clientID: clientID)
+                GIDSignIn.sharedInstance.configuration = config
+                
+                // Get the top view controller
+                guard let topVC = await getTopViewController() else {
+                    self.errorMessage = "Could not get top view controller"
+                    return
+                }
+                
+                // Use async/await for sign in with explicit type
+                let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
+                    DispatchQueue.main.async {
+                        GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { result, error in
+                            if let error = error {
+                                continuation.resume(throwing: error)
+                                return
+                            }
+                            guard let result = result else {
+                                continuation.resume(throwing: NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No result returned"]))
+                                return
+                            }
+                            continuation.resume(returning: result)
+                        }
+                    }
+                }
+                
+                guard let idToken = userResult.user.idToken?.tokenString else {
+                    throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No ID token"])
+                }
+                
+                let credential = GoogleAuthProvider.credential(
+                    withIDToken: idToken,
+                    accessToken: userResult.user.accessToken.tokenString
+                )
+                
+                let authResult = try await Auth.auth().signIn(with: credential)
+                await MainActor.run {
+                    self.user = authResult.user
+                    self.isAuthenticated = true
+                }
+                
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                }
+            }
         }
-        
-        do {
-            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController)
-            guard let idToken = result.user.idToken?.tokenString else { throw AuthError.missingToken }
+    }
+    
+    private func getTopViewController() async -> UIViewController? {
+        await MainActor.run {
+            let scenes = UIApplication.shared.connectedScenes
+            let windowScene = scenes.first as? UIWindowScene
+            let window = windowScene?.windows.first
             
-            let credential = GoogleAuthProvider.credential(
-                withIDToken: idToken,
-                accessToken: result.user.accessToken.tokenString
-            )
+            guard let rootVC = window?.rootViewController else {
+                return nil
+            }
             
-            let authResult = try await Auth.auth().signIn(with: credential)
-            DispatchQueue.main.async {
-                self.user = authResult.user
-                self.isAuthenticated = true
+            var topVC = rootVC
+            while let presentedVC = topVC.presentedViewController {
+                topVC = presentedVC
             }
-        } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
-            throw error
+            return topVC
         }
     }
     
@@ -114,7 +147,7 @@ class AuthManager: ObservableObject {
         let request = provider.createRequest()
         request.requestedScopes = [.fullName, .email]
         
-        let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ASAuthorization, Error>) in
+        let result: ASAuthorization = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ASAuthorization, Error>) in
             let controller = ASAuthorizationController(authorizationRequests: [request])
             controller.performRequests()
             
@@ -154,7 +187,7 @@ class AuthManager: ObservableObject {
             )
             
             let authResult = try await Auth.auth().signIn(with: credential)
-            DispatchQueue.main.async {
+            await MainActor.run {
                 self.user = authResult.user
                 self.isAuthenticated = true
             }
@@ -194,19 +227,17 @@ class AuthManager: ObservableObject {
         return result
     }
     
-    // Sign Out
-    func signOut() throws {
-        do {
-            try Auth.auth().signOut()
-            DispatchQueue.main.async {
+    func signOut() {
+        Task { @MainActor in
+            do {
+                try Auth.auth().signOut()
+                GIDSignIn.sharedInstance.signOut()
                 self.user = nil
                 self.isAuthenticated = false
-            }
-        } catch {
-            DispatchQueue.main.async {
+                self.isAdmin = false
+            } catch {
                 self.errorMessage = error.localizedDescription
             }
-            throw error
         }
     }
     
@@ -227,15 +258,12 @@ class AuthManager: ObservableObject {
                 "isAdmin" : false
             ])
             
-            DispatchQueue.main.async {
-                self.user = result.user
-                self.isAuthenticated = true
-                self.isAdmin = false
-            }
+            self.user = result.user
+            self.isAuthenticated = true
+            self.isAdmin = false
+            
         } catch {
-            DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
-            }
+            self.errorMessage = error.localizedDescription
             throw error
         }
     }
