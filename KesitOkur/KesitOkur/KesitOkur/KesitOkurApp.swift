@@ -28,9 +28,13 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Configure Firebase
         FirebaseApp.configure()
         
-        // Configure App Check
-        let providerFactory = AppCheckDebugProviderFactory()
-        AppCheck.setAppCheckProviderFactory(providerFactory)
+        // Configure App Check for Production
+                #if DEBUG
+                let providerFactory = AppCheckDebugProviderFactory()
+                #else
+                let providerFactory = DeviceCheckProviderFactory()
+                #endif
+                AppCheck.setAppCheckProviderFactory(providerFactory)
         
         return true
     }

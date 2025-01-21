@@ -10,6 +10,7 @@ import SwiftUI
 struct SearchView: View {
     @ObservedObject var viewModel: BooksViewModel
     @State private var searchText = ""
+    @State private var isSearching = false
     
     var filteredBooks: [Book] {
         if searchText.isEmpty {
@@ -36,9 +37,34 @@ struct SearchView: View {
             .ignoresSafeArea()
             
             VStack {
-                // Search bar
-                SearchBar(text: $searchText)
-                    .padding()
+                // Search Bar
+                HStack {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.gray)
+                        
+                        TextField("Kitap veya yazar ara...", text: $searchText)
+                            .foregroundColor(.black)
+                            .textFieldStyle(CustomTextFieldStyle())
+                            .textInputAutocapitalization(.never)
+                    }
+                    .padding(.horizontal)
+                    
+                    if isSearching {
+                        Button(action: {
+                            searchText = ""
+                            isSearching = false
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                         to: nil, from: nil, for: nil)
+                        }) {
+                            Text("İptal")
+                                .foregroundColor(.blue)
+                        }
+                        .padding(.trailing)
+                        .transition(.move(edge: .trailing))
+                        .animation(.default, value: isSearching)
+                    }
+                }
                 
                 if filteredBooks.isEmpty {
                     EmptySearchView(searchText: searchText)
@@ -56,6 +82,9 @@ struct SearchView: View {
             }
         }
         .navigationTitle("Kitap Ara")
+        .onTapGesture {
+            isSearching = true
+        }
     }
 }
 
@@ -118,4 +147,3 @@ struct EmptySearchView: View {
         }
     }
 }
-

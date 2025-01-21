@@ -12,6 +12,7 @@ import GoogleSignIn
 import FirebaseCore
 import FirebaseFirestore
 import AuthenticationServices
+import CryptoKit
 
 @MainActor
 class AuthManager: ObservableObject {
@@ -77,14 +78,12 @@ class AuthManager: ObservableObject {
                 let config = GIDConfiguration(clientID: clientID)
                 GIDSignIn.sharedInstance.configuration = config
                 
-                // Get the top view controller
                 guard let topVC = await getTopViewController() else {
                     self.errorMessage = "Could not get top view controller"
                     return
                 }
                 
-                // Use async/await for sign in with explicit type
-                let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
+                let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { continuation in
                     DispatchQueue.main.async {
                         GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { result, error in
                             if let error = error {
@@ -92,7 +91,7 @@ class AuthManager: ObservableObject {
                                 return
                             }
                             guard let result = result else {
-                                continuation.resume(throwing: NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No result returned"]))
+                                continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
                                 return
                             }
                             continuation.resume(returning: result)
@@ -100,8 +99,9 @@ class AuthManager: ObservableObject {
                     }
                 }
                 
+                // Add additional validation for ID token
                 guard let idToken = userResult.user.idToken?.tokenString else {
-                    throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No ID token"])
+                    throw NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid or expired ID token"])
                 }
                 
                 let credential = GoogleAuthProvider.credential(
@@ -109,15 +109,30 @@ class AuthManager: ObservableObject {
                     accessToken: userResult.user.accessToken.tokenString
                 )
                 
-                let authResult = try await Auth.auth().signIn(with: credential)
-                await MainActor.run {
-                    self.user = authResult.user
-                    self.isAuthenticated = true
+                // Add retry mechanism for credential sign-in
+                do {
+                    let authResult = try await Auth.auth().signIn(with: credential)
+                    await MainActor.run {
+                        self.user = authResult.user
+                        self.isAuthenticated = true
+                    }
+                } catch {
+                    // Specific handling for credential-related errors
+                    if let authError = error as NSError?,
+                       authError.domain == "FIRAuthErrorDomain",
+                       authError.code == AuthErrorCode.invalidCredential.rawValue {
+                        // Attempt re-authentication or prompt user to sign in again
+                        self.errorMessage = "Authentication failed. Please try signing in again."
+                    } else {
+                        self.errorMessage = error.localizedDescription
+                    }
+                    throw error
                 }
                 
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
+                    print("Google Sign-In Error: \(error.localizedDescription)")
                 }
             }
         }
@@ -143,58 +158,67 @@ class AuthManager: ObservableObject {
     
     // Sign in with Apple
     func signInWithApple() async throws {
-        let provider = ASAuthorizationAppleIDProvider()
-        let request = provider.createRequest()
+        let nonce = randomNonceString()
+        let appleIDProvider = ASAuthorizationAppleIDProvider()
+        let request = appleIDProvider.createRequest()
         request.requestedScopes = [.fullName, .email]
+        request.nonce = sha256(nonce)
         
-        let result: ASAuthorization = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ASAuthorization, Error>) in
-            let controller = ASAuthorizationController(authorizationRequests: [request])
-            controller.performRequests()
-            
-            class Delegate: NSObject, ASAuthorizationControllerDelegate {
-                let continuation: CheckedContinuation<ASAuthorization, Error>
+        do {
+            let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ASAuthorization, Error>) in
+                let controller = ASAuthorizationController(authorizationRequests: [request])
+                let delegate = AppleSignInDelegate(continuation: continuation)
+                controller.delegate = delegate
+                controller.presentationContextProvider = delegate
+                controller.performRequests()
                 
-                init(continuation: CheckedContinuation<ASAuthorization, Error>) {
-                    self.continuation = continuation
-                }
-                
-                func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-                    continuation.resume(returning: authorization)
-                }
-                
-                func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-                    continuation.resume(throwing: error)
-                }
+                // Store delegate to prevent it from being deallocated
+                objc_setAssociatedObject(controller, "delegate", delegate, .OBJC_ASSOCIATION_RETAIN)
             }
             
-            let delegate = Delegate(continuation: continuation)
-            controller.delegate = delegate
-            objc_setAssociatedObject(controller, "delegate", delegate, .OBJC_ASSOCIATION_RETAIN)
-        }
-        
-        if let appleIDCredential = result.credential as? ASAuthorizationAppleIDCredential {
-            guard let appleIDToken = appleIDCredential.identityToken,
+            guard let appleIDCredential = result.credential as? ASAuthorizationAppleIDCredential,
+                  let appleIDToken = appleIDCredential.identityToken,
                   let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                throw AuthError.invalidToken
+                throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to fetch identity token"])
             }
             
-            let nonce = randomNonceString()
             let credential = OAuthProvider.credential(
-                providerID: AuthProviderID.apple,
-                idToken: idTokenString,
-                rawNonce: nonce,
-                accessToken: nil
+                providerID:.apple,
+                    idToken: idTokenString,
+                    rawNonce: nonce,
+                    accessToken: nil
             )
             
-            let authResult = try await Auth.auth().signIn(with: credential)
-            await MainActor.run {
+            do {
+                let authResult = try await Auth.auth().signIn(with: credential)
+                
+                // Update user profile if name is provided
+                if let fullName = appleIDCredential.fullName {
+                    let changeRequest = authResult.user.createProfileChangeRequest()
+                    changeRequest.displayName = "\(fullName.givenName ?? "") \(fullName.familyName ?? "")"
+                    try await changeRequest.commitChanges()
+                }
+                
                 self.user = authResult.user
                 self.isAuthenticated = true
+                
+            } catch {
+                // Handle specific credential errors
+                if let authError = error as NSError?,
+                   authError.domain == "FIRAuthErrorDomain",
+                   authError.code == AuthErrorCode.invalidCredential.rawValue {
+                    self.errorMessage = "Invalid or expired authentication. Please try again."
+                } else {
+                    self.errorMessage = error.localizedDescription
+                }
+                throw error
             }
+        } catch {
+            self.errorMessage = error.localizedDescription
+            throw error
         }
     }
     
-    // Helper function to generate nonce
     private func randomNonceString(length: Int = 32) -> String {
         precondition(length > 0)
         let charset: [Character] =
@@ -225,6 +249,16 @@ class AuthManager: ObservableObject {
         }
         
         return result
+    }
+    
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        let hashString = hashedData.compactMap {
+            String(format: "%02x", $0)
+        }.joined()
+        
+        return hashString
     }
     
     func signOut() {
@@ -266,6 +300,29 @@ class AuthManager: ObservableObject {
             self.errorMessage = error.localizedDescription
             throw error
         }
+    }
+}
+
+class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    private let continuation: CheckedContinuation<ASAuthorization, Error>
+    
+    init(continuation: CheckedContinuation<ASAuthorization, Error>) {
+        self.continuation = continuation
+    }
+    
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        guard let window = UIApplication.shared.windows.first else {
+            fatalError("No window found")
+        }
+        return window
+    }
+    
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        continuation.resume(returning: authorization)
+    }
+    
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        continuation.resume(throwing: error)
     }
 }
 

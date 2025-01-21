@@ -10,6 +10,7 @@ struct SignUpView: View {
     @State private var lastName: String = ""
     @State private var email: String = ""
     @State private var password: String = ""
+    @State private var confirmPassword: String = ""
     @State private var birthDate = Date()
     @State private var showError = false
     @State private var errorMessage = ""
@@ -32,28 +33,39 @@ struct SignUpView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             Text("Yeni Hesap Oluştur")
-                                .font(.title2)
-                                .bold()
-                                .padding(.top, 20)
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .padding(.top, 50)
                             
                             // Sign up form
                             VStack(spacing: 15) {
                                 TextField("Adı", text: $firstName)
                                     .textFieldStyle(CustomTextFieldStyle())
+                                    .textInputAutocapitalization(.words)
+                                    .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
                                 
                                 TextField("Soyadı", text: $lastName)
                                     .textFieldStyle(CustomTextFieldStyle())
+                                    .textInputAutocapitalization(.words)
+                                    .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
                                 
                                 TextField("E-posta", text: $email)
                                     .textFieldStyle(CustomTextFieldStyle())
-                                    .keyboardType(.emailAddress)
                                     .textInputAutocapitalization(.never)
+                                    .keyboardType(.emailAddress)
+                                    .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
                                 
                                 SecureField("Şifre", text: $password)
                                     .textFieldStyle(CustomTextFieldStyle())
+                                    .foregroundColor(.black)
+                                    .frame(width: geometry.size.width * 0.8)
+                                
+                                SecureField("Şifreyi Tekrarla", text: $confirmPassword)
+                                    .textFieldStyle(CustomTextFieldStyle())
+                                    .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
                                 
                                 // Date Picker for birth date
@@ -69,62 +81,72 @@ struct SignUpView: View {
                                 .shadow(color: .black.opacity(0.1), radius: 3)
                                 .frame(width: geometry.size.width * 0.8)
                             }
+                            .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                            .padding(.horizontal)
                             
                             // Sign Up Button
                             Button(action: {
-                                Task {
-                                    do {
-                                        try await authManager.signUp(
-                                            email: email,
-                                            password: password,
-                                            firstName: firstName,
-                                            lastName: lastName,
-                                            birthDate: birthDate
-                                        )
-                                        dismiss()
-                                    } catch {
-                                        showError = true
-                                        errorMessage = error.localizedDescription
-                                    }
-                                }
+                                signUp()
                             }) {
                                 Text("Kayıt Ol")
-                                    .frame(width: geometry.size.width * 0.8)
-                                    .padding()
-                                    .background(Color.black)
-                                    .foregroundColor(.white)
+                                    .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                                    .frame(height: 50)
+                                    .background(Color.yellow.opacity(0.8))
+                                    .foregroundColor(.black)
                                     .cornerRadius(10)
+                                    .font(.headline)
                             }
+                            .padding(.horizontal)
                             
-                            Button("Zaten hesabın var mı? Giriş Yap") {
+                            Button("Zaten hesabın var mı? Giriş yap") {
                                 dismiss()
                             }
-                            .foregroundColor(.black)
-                            .padding(.top)
+                            .foregroundColor(.blue)
                         }
                         .padding(.vertical)
                     }
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(leading: Button("İptal") {
                 dismiss()
             })
+            .alert("Hata", isPresented: $showError) {
+                Button("Tamam", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
         }
-        .alert("Hata", isPresented: $showError) {
-            Button("Tamam", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
+    }
+    
+    private func signUp() {
+        guard password == confirmPassword else {
+            showError = true
+            errorMessage = "Şifreler eşleşmiyor"
+            return
+        }
+        
+        Task {
+            do {
+                try await authManager.signUp(
+                    email: email,
+                    password: password,
+                    firstName: firstName,
+                    lastName: lastName,
+                    birthDate: birthDate
+                )
+                dismiss()
+            } catch {
+                showError = true
+                errorMessage = error.localizedDescription
+            }
         }
     }
 }
 
-
-
-#Preview {
-    SignUpView()
-        .environmentObject(AuthManager())
-}
-
-#Preview {
-    SignUpView()
+struct SignUpView_Previews: PreviewProvider {
+    static var previews: some View {
+        SignUpView()
+            .environmentObject(AuthManager())
+    }
 }

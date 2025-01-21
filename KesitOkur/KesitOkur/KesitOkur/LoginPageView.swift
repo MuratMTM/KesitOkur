@@ -14,141 +14,145 @@ struct LoginPageView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                // Background
-                Spacer()
-                Image(KesitOkurAppLoginPageTexts().booksImageText)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .ignoresSafeArea()
-                    .padding(.top)
-                
-                VStack(spacing: 25) {
-                    // Profile Image and App Name
-                    ProfileImageView(imageName: KesitOkurAppLoginPageTexts().profilePhotoImageText)
-                        .frame(width: 150, height: 150)
-                    AppNameTextView(appName: KesitOkurAppLoginPageTexts().appNameText)
-                        .padding(.bottom, 20)
+            ScrollView(showsIndicators: false) {
+                ZStack {
+                    // Background
+                    Image(KesitOkurAppLoginPageTexts().booksImageText)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(minWidth: geometry.size.width, minHeight: geometry.size.height)
+                        .ignoresSafeArea()
                     
-                    // Login Fields
-                    VStack(spacing: 15) {
-                        // Email Field
-                        TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $email)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .frame(width: geometry.size.width * 0.8)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.emailAddress)
+                    // Content
+                    VStack(spacing: geometry.size.height * 0.02) {
+                        Spacer(minLength: geometry.size.height * 0.05)
                         
-                        // Password Field
-                        SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .frame(width: geometry.size.width * 0.8)
-                    }
-                    
-                    // Forgot Password
-                    Text(KesitOkurAppLoginPageTexts().forgotPasswordText)
-                        .font(.system(size: 12.0, weight: .light))
-                        .padding(.top, 5)
-                    
-                    // Sign In Button
-                    Button(action: {
-                        Task {
-                            do {
-                                try await authManager.signInWithEmail(email: email, password: password)
-                            } catch {
-                                showError = true
-                                errorMessage = error.localizedDescription
-                            }
+                        // Profile Image and App Name
+                        ProfileImageView(imageName: KesitOkurAppLoginPageTexts().profilePhotoImageText)
+                            .frame(width: min(geometry.size.width * 0.3, 120),
+                                   height: min(geometry.size.width * 0.3, 120))
+                        
+                        AppNameTextView(appName: KesitOkurAppLoginPageTexts().appNameText)
+                            .padding(.bottom, geometry.size.height * 0.01)
+                        
+                        // Login Fields
+                        VStack(spacing: 12) {
+                            // Email Field
+                            TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $email)
+                                .textFieldStyle(CustomTextFieldStyle())
+                                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                                .textInputAutocapitalization(.never)
+                                .keyboardType(.emailAddress)
+                                .foregroundColor(.black)
+                            
+                            // Password Field
+                            SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
+                                .textFieldStyle(CustomTextFieldStyle())
+                                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                                .foregroundColor(.black)
                         }
-                    }) {
-                        Text(KesitOkurAppLoginPageTexts().signInButtonText)
-                            .frame(width: geometry.size.width * 0.8, height: 50)
-                            .background(Color.yellow.opacity(0.8))
-                            .foregroundColor(.black)
-                            .cornerRadius(10)
-                            .font(.headline)
-                    }
-                    
-                    // Divider
-                    HStack {
-                        Rectangle()
-                            .frame(height: 1)
-                        Text("veya")
-                            .foregroundColor(.black.opacity(0.6))
-                        Rectangle()
-                            .frame(height: 1)
-                    }
-                    .foregroundColor(.black.opacity(0.3))
-                    .frame(width: geometry.size.width * 0.8)
-                  
-                    
-                    // Social Login Buttons
-                    VStack(spacing: 15) {
+                        .padding(.horizontal)
                         
-                        Button(action: {
-                            showingSignUp = true
-                        }) {
-                            Text("Kayıt Ol")
-                                .frame(width: geometry.size.width * 0.8, height: 50)
-                                .background(Color.black)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
-                                .font(.headline)
-                        }
+                        // Forgot Password
+                        Text(KesitOkurAppLoginPageTexts().forgotPasswordText)
+                            .font(.system(size: min(12, geometry.size.width * 0.03), weight: .light))
+                            .padding(.top, 5)
                         
-                        // Google Sign In
-                        Button(action: {
+                        // Sign In Button
+                        LoginButton(width: min(geometry.size.width * 0.85, 400),
+                                  height: min(50, geometry.size.height * 0.06),
+                                  title: KesitOkurAppLoginPageTexts().signInButtonText) {
                             Task {
                                 do {
-                                    try await authManager.signInWithGoogle()
+                                    try await authManager.signInWithEmail(email: email, password: password)
                                 } catch {
                                     showError = true
                                     errorMessage = error.localizedDescription
                                 }
                             }
-                        }) {
-                            HStack {
-                                Image("googleLogo")
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 20, height: 20)
-                                Text("Google ile Devam Et")
-                                    .font(.headline)
-                                
-                            }
-                            .frame(width: geometry.size.width * 0.8, height: 50)
-                            .background(Color.white)
-                            .foregroundColor(.black)
-                            .cornerRadius(10)
-                            .shadow(color: .black.opacity(0.1), radius: 3)
                         }
                         
-                        // Apple Sign In
-                        SignInWithAppleButton(
-                            onRequest: { request in
-                                request.requestedScopes = [.fullName, .email]
-                            },
-                            onCompletion: { result in
+                        // Divider
+                        HStack {
+                            Rectangle()
+                                .frame(height: 1)
+                            Text("veya")
+                                .foregroundColor(.black.opacity(0.6))
+                                .font(.system(size: min(14, geometry.size.width * 0.035)))
+                            Rectangle()
+                                .frame(height: 1)
+                        }
+                        .foregroundColor(.black.opacity(0.3))
+                        .frame(width: min(geometry.size.width * 0.85, 400))
+                        .padding(.vertical, geometry.size.height * 0.01)
+                        
+                        // Social Login Buttons
+                        VStack(spacing: min(12, geometry.size.height * 0.015)) {
+                            // Sign Up Button
+                            LoginButton(width: min(geometry.size.width * 0.85, 400),
+                                      height: min(50, geometry.size.height * 0.06),
+                                      backgroundColor: .black,
+                                      foregroundColor: .white,
+                                      title: "Kayıt Ol") {
+                                showingSignUp = true
+                            }
+                            
+                            // Google Sign In
+                            Button(action: {
                                 Task {
                                     do {
-                                        try await authManager.signInWithApple()
+                                        try await authManager.signInWithGoogle()
                                     } catch {
                                         showError = true
                                         errorMessage = error.localizedDescription
                                     }
                                 }
+                            }) {
+                                HStack {
+                                    Image("googleLogo")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: min(20, geometry.size.width * 0.05),
+                                               height: min(20, geometry.size.width * 0.05))
+                                    Text("Google ile Devam Et")
+                                        .font(.system(size: min(16, geometry.size.width * 0.04), weight: .semibold))
+                                }
+                                .frame(width: min(geometry.size.width * 0.85, 400),
+                                       height: min(50, geometry.size.height * 0.06))
+                                .background(Color.white)
+                                .foregroundColor(.black)
+                                .cornerRadius(10)
+                                .shadow(color: .black.opacity(0.1), radius: 3)
                             }
-                        )
-                        .frame(width: geometry.size.width * 0.8, height: 50)
-                        .cornerRadius(10)
+                            
+                            // Apple Sign In
+                            SignInWithAppleButton(
+                                onRequest: { request in
+                                    request.requestedScopes = [.fullName, .email]
+                                },
+                                onCompletion: { result in
+                                    Task {
+                                        do {
+                                            try await authManager.signInWithApple()
+                                        } catch {
+                                            showError = true
+                                            errorMessage = error.localizedDescription
+                                        }
+                                    }
+                                }
+                            )
+                            .frame(width: min(geometry.size.width * 0.85, 400),
+                                   height: min(50, geometry.size.height * 0.06))
+                            .cornerRadius(10)
+                        }
+                        
+                        Spacer(minLength: geometry.size.height * 0.05)
                     }
-                    
-                   
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
             }
-        }.edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+        }
+        .edgesIgnoringSafeArea(.all)
         .alert("Hata", isPresented: $showError) {
             Button("Tamam", role: .cancel) { }
         } message: {
@@ -161,6 +165,27 @@ struct LoginPageView: View {
     }
 }
 
+// Custom Button Style
+struct LoginButton: View {
+    let width: CGFloat
+    let height: CGFloat
+    var backgroundColor: Color = Color.yellow.opacity(0.8)
+    var foregroundColor: Color = .black
+    let title: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .frame(width: width, height: height)
+                .background(backgroundColor)
+                .foregroundColor(foregroundColor)
+                .cornerRadius(10)
+                .font(.system(size: min(16, width * 0.04), weight: .semibold))
+        }
+    }
+}
+
 // Custom TextField Style
 struct CustomTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
@@ -169,6 +194,8 @@ struct CustomTextFieldStyle: TextFieldStyle {
             .background(Color.white)
             .cornerRadius(10)
             .shadow(color: .black.opacity(0.1), radius: 3)
+            .tint(.black) // Sets the cursor and selection color
+            .accentColor(.black) // Sets the focus color
     }
 }
 
@@ -178,12 +205,12 @@ struct ProfileImageView: View {
     var body: some View {
         Image(imageName)
             .resizable()
-            .scaledToFit() // Görselin boyutunun alanla uyumlu olmasını sağlar
+            .scaledToFit()
             .clipShape(Circle())
             .overlay {
                 Circle().stroke(.yellow, lineWidth: 5)
             }
-            .shadow(radius: 20)
+            .shadow(radius: 10)
     }
 }
 
@@ -192,30 +219,11 @@ struct AppNameTextView: View {
     
     var body: some View {
         Text(appName)
-            .font(.system(size: 16.0, weight: .bold))
+            .font(.system(size: 16, weight: .bold))
             .italic()
-            .font(.largeTitle)
-            .padding(.bottom, 20)
+            .padding(.bottom, 10)
     }
 }
-
-struct SignInButtonView: View {
-    let buttonName: String
-    
-    var body: some View {
-        Text(buttonName)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .foregroundColor(.white)
-            .background(Color.yellow.opacity(50))
-            .cornerRadius(20)
-    }
-}
-
-#Preview {
-    LoginPageView()
-}
-
 
 struct OnboardingView: View {
     @State var onboardingState: Int = 0
@@ -279,4 +287,10 @@ struct SignInLogo {
     var withEmail: Image = Image("emailLogo")
      var withApple: Image = Image("appleLogo")
     
+}
+
+struct LoginPageView_Previews: PreviewProvider {
+    static var previews: some View {
+        LoginPageView()
+    }
 }

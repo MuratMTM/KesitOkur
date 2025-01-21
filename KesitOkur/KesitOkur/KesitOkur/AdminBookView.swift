@@ -20,7 +20,76 @@ struct AdminBookView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Book Info
+                        // Book Infofunc signInWithGoogle() {
+                            Task {
+                                do {
+                                    guard let clientID = FirebaseApp.app()?.options.clientID else {
+                                        self.errorMessage = "Error getting client ID"
+                                        return
+                                    }
+                                    
+                                    let config = GIDConfiguration(clientID: clientID)
+                                    GIDSignIn.sharedInstance.configuration = config
+                                    
+                                    guard let topVC = await getTopViewController() else {
+                                        self.errorMessage = "Could not get top view controller"
+                                        return
+                                    }
+                                    
+                                    let userResult: GIDSignInResult = try await withCheckedThrowingContinuation { continuation in
+                                        DispatchQueue.main.async {
+                                            GIDSignIn.sharedInstance.signIn(withPresenting: topVC) { result, error in
+                                                if let error = error {
+                                                    continuation.resume(throwing: error)
+                                                    return
+                                                }
+                                                guard let result = result else {
+                                                    continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
+                                                    return
+                                                }
+                                                continuation.resume(returning: result)
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Add additional validation for ID token
+                                    guard let idToken = userResult.user.idToken?.tokenString else {
+                                        throw NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid or expired ID token"])
+                                    }
+                                    
+                                    let credential = GoogleAuthProvider.credential(
+                                        withIDToken: idToken,
+                                        accessToken: userResult.user.accessToken.tokenString
+                                    )
+                                    
+                                    // Add retry mechanism for credential sign-in
+                                    do {
+                                        let authResult = try await Auth.auth().signIn(with: credential)
+                                        await MainActor.run {
+                                            self.user = authResult.user
+                                            self.isAuthenticated = true
+                                        }
+                                    } catch {
+                                        // Specific handling for credential-related errors
+                                        if let authError = error as NSError?,
+                                           authError.domain == "FIRAuthErrorDomain",
+                                           authError.code == AuthErrorCode.invalidCredential.rawValue {
+                                            // Attempt re-authentication or prompt user to sign in again
+                                            self.errorMessage = "Authentication failed. Please try signing in again."
+                                        } else {
+                                            self.errorMessage = error.localizedDescription
+                                        }
+                                        throw error
+                                    }
+                                    
+                                } catch {
+                                    await MainActor.run {
+                                        self.errorMessage = error.localizedDescription
+                                        print("Google Sign-In Error: \(error.localizedDescription)")
+                                    }
+                                }
+                            }
+                        }
                         BookHeaderView(book: book)
                         
                         // Current Excerpts
