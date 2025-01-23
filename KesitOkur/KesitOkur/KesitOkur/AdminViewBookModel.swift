@@ -133,7 +133,7 @@ class AdminBookViewModel: ObservableObject {
         let imageName = "\(book.id)_\(UUID().uuidString).jpg"
         let storageRef = storage.reference().child("book_excerpts/\(imageName)")
         
-        let _ = try await storageRef.putData(imageData)
+        let _ = storageRef.putData(imageData)
         let downloadURL = try await storageRef.downloadURL()
         
         return downloadURL.absoluteString

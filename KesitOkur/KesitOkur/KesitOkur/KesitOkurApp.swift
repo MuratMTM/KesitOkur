@@ -20,6 +20,7 @@ import FirebaseDynamicLinks
 import FirebaseAnalytics
 import FirebaseInAppMessaging
 import UserNotifications
+import FirebaseMessaging
 
 // Use a factory method instead of a class
 class AppCheckProviderFactoryImpl: NSObject, AppCheckProviderFactory{
@@ -32,7 +33,7 @@ class AppCheckProviderFactoryImpl: NSObject, AppCheckProviderFactory{
     }
 }
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         
@@ -44,13 +45,78 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         AppCheck.setAppCheckProviderFactory(providerFactory)
         
         // Configure Google Sign-In
-        GIDSignIn.sharedInstance.restorePreviousSignIn { user, error in
-            if let error = error {
-                print("Error restoring Google Sign-In: \(error.localizedDescription)")
+        guard let clientID = FirebaseApp.app()?.options.clientID else {
+            print("Error: Firebase Client ID not found")
+            return true
+        }
+        
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+        
+        // Optional: Check for previous sign-in more safely
+        if let currentUser = GIDSignIn.sharedInstance.currentUser {
+            print("Previous Google Sign-In user found: \(currentUser.userID ?? "Unknown")")
+        }
+        
+        // Configure Firebase Messaging
+        Messaging.messaging().delegate = self
+        
+        // Register for remote notifications
+        UNUserNotificationCenter.current().delegate = self
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if granted {
+                print("Notification permission granted")
+            } else {
+                print("Notification permission denied")
             }
         }
         
+        application.registerForRemoteNotifications()
+        
         return true
+    }
+    
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+        print("Device Token: \(deviceToken.map { String(format: "%02.2hhx", $0) }.joined())")
+    }
+    
+    func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        // Handle received remote notification
+        if let messageID = userInfo["gcm.message_id"] as? String {
+            print("Received message ID: \(messageID)")
+        }
+        
+        Messaging.messaging().appDidReceiveMessage(userInfo)
+        completionHandler(.newData)
+    }
+    
+    // UNUserNotificationCenterDelegate method
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Show notification when app is in foreground
+        completionHandler([.banner, .sound, .badge])
+    }
+    
+    // MessagingDelegate method
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+        print("Firebase registration token: \(fcmToken)")
+        
+        // Here you can send the token to your server
+        // For example:
+        // sendTokenToServer(fcmToken)
+    }
+    
+    // Optional: Method to handle notification tap
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        let userInfo = response.notification.request.content.userInfo
+        
+        // Handle notification tap
+        if let messageID = userInfo["gcm.message_id"] as? String {
+            print("Notification tapped for message ID: \(messageID)")
+        }
+        
+        completionHandler()
     }
     
     func application(_ app: UIApplication,
@@ -82,7 +148,6 @@ struct KesitOkurApp: App {
         }
     }
 }
-
 
 // Optional: Main Tab View after Authentication
 struct MainTabView: View {
@@ -117,7 +182,7 @@ struct LoginView: View {
         VStack {
             Button("Sign In with Google") {
                 Task {
-                    await authManager.signInWithGoogle()
+             authManager.signInWithGoogle()
                 }
             }
             
@@ -129,4 +194,3 @@ struct LoginView: View {
         }
     }
 }
-

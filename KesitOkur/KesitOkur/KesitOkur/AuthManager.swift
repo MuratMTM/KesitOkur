@@ -79,47 +79,109 @@ class AuthManager: ObservableObject {
 
     private func performGoogleSignIn() async throws {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
-            throw NSError(domain: "GoogleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Client ID not found"])
+            let error = NSError(domain: "GoogleSignIn", 
+                                code: -1, 
+                                userInfo: [NSLocalizedDescriptionKey: "Firebase Client ID not found. Check your GoogleService-Info.plist"])
+            print("Google Sign-In Error: \(error.localizedDescription)")
+            throw error
         }
         
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
         
-        let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
-            GIDSignIn.sharedInstance.signIn(withPresenting: getRootViewController()) { result, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
+        do {
+            let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GIDSignInResult, Error>) in
+                GIDSignIn.sharedInstance.signIn(withPresenting: getRootViewController()) { result, error in
+                    if let error = error {
+                        print("Google Sign-In Error Details: \(error.localizedDescription)")
+                        continuation.resume(throwing: error)
+                        return
+                    }
+                    
+                    guard let signInResult = result else {
+                        let noResultError = NSError(domain: "GoogleSignIn", 
+                                                    code: -2, 
+                                                    userInfo: [NSLocalizedDescriptionKey: "No sign-in result received"])
+                        continuation.resume(throwing: noResultError)
+                        return
+                    }
+                    
+                    continuation.resume(returning: signInResult)
                 }
-                
-                guard let signInResult = result else {
-                    continuation.resume(throwing: NSError(domain: "GoogleSignIn", code: -2, userInfo: [NSLocalizedDescriptionKey: "No sign-in result"]))
-                    return
-                }
-                
-                continuation.resume(returning: signInResult)
             }
-        }
-        
-        // Validate ID token
-        guard let idToken = result.user.idToken?.tokenString else {
-            throw NSError(domain: "GoogleSignIn", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid ID token"])
-        }
-        
-        let credential = GoogleAuthProvider.credential(
-            withIDToken: idToken,
-            accessToken: result.user.accessToken.tokenString
-        )
-        
-        let authResult = try await Auth.auth().signIn(with: credential)
-        
-        await MainActor.run {
-            self.user = authResult.user
-            self.isAuthenticated = true
+            
+            guard let user = result.user,
+                  let idToken = user.idToken?.tokenString else {
+                throw NSError(domain: "GoogleSignIn", 
+                              code: -3, 
+                              userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve Google user or ID token"])
+            }
+            
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken,
+                                                           accessToken: user.accessToken.tokenString)
+            
+            let authResult = try await Auth.auth().signIn(with: credential)
+            
+            // Save user to Firestore
+            try await saveGoogleUserToFirestore(user: authResult.user, googleUser: result.user)
+            
+            // Update local state
+            await MainActor.run {
+                self.user = authResult.user
+                self.isAuthenticated = true
+                self.errorMessage = nil
+            }
+            
+            print("Successfully signed in with Google: \(authResult.user.uid)")
+            
+        } catch {
+            // Detailed error handling
+            await MainActor.run {
+                if let authError = error as NSError?,
+                   authError.domain == "FIRAuthErrorDomain" {
+                    switch authError.code {
+                    case AuthErrorCode.invalidCredential.rawValue:
+                        self.errorMessage = "Invalid or expired authentication. Please try again."
+                    case AuthErrorCode.operationNotAllowed.rawValue:
+                        self.errorMessage = "Sign-in method not allowed. Please contact support."
+                    default:
+                        self.errorMessage = "Authentication failed. \(error.localizedDescription)"
+                    }
+                } else {
+                    self.errorMessage = "Sign-in failed. \(error.localizedDescription)"
+                }
+            }
+            
+            print("Google Sign-In Error: \(error.localizedDescription)")
+            throw error
         }
     }
 
- 
+    private func saveGoogleUserToFirestore(user: User, googleUser: GIDGoogleUser) async throws {
+        let db = Firestore.firestore()
+        
+        // Prepare user data
+        var userData: [String: Any] = [
+            "uid": user.uid,
+            "email": user.email ?? googleUser.profile?.email ?? "",
+            "displayName": user.displayName ?? googleUser.profile?.name ?? "",
+            "createdAt": FieldValue.serverTimestamp(),
+            "isAdmin": false
+        ]
+        
+        // Add profile picture URL if available
+        if let photoURL = googleUser.profile?.imageURL(withDimension: 200)?.absoluteString {
+            userData["photoURL"] = photoURL
+        }
+        
+        // Save to Firestore
+        do {
+            try await db.collection("users").document(user.uid).setData(userData, merge: true)
+        } catch {
+            print("Error saving Google user to Firestore: \(error.localizedDescription)")
+            throw error
+        }
+    }
 
     // Helper method to get root view controller
     private func getRootViewController() -> UIViewController {
@@ -189,46 +251,62 @@ class AuthManager: ObservableObject {
             )
             
             // Update local state
-            self.user = firebaseUser
-            self.isAuthenticated = true
+            await MainActor.run {
+                self.user = firebaseUser
+                self.isAuthenticated = true
+                self.errorMessage = nil
+            }
+            
+            print("Successfully signed in with Apple: \(firebaseUser.uid)")
             
         } catch {
             // Detailed error handling
-            if let authError = error as NSError?,
-               authError.domain == "FIRAuthErrorDomain",
-               authError.code == AuthErrorCode.invalidCredential.rawValue {
-                self.errorMessage = "Invalid or expired authentication. Please try again."
-            } else {
-                self.errorMessage = error.localizedDescription
+            await MainActor.run {
+                if let authError = error as NSError?,
+                   authError.domain == "FIRAuthErrorDomain" {
+                    switch authError.code {
+                    case AuthErrorCode.invalidCredential.rawValue:
+                        self.errorMessage = "Invalid or expired authentication. Please try again."
+                    case AuthErrorCode.operationNotAllowed.rawValue:
+                        self.errorMessage = "Sign-in method not allowed. Please contact support."
+                    default:
+                        self.errorMessage = "Authentication failed. \(error.localizedDescription)"
+                    }
+                } else {
+                    self.errorMessage = "Sign-in failed. \(error.localizedDescription)"
+                }
             }
+            
+            print("Apple Sign-In Error: \(error.localizedDescription)")
             throw error
         }
     }
 
-    // Helper method to save Apple user details to Firestore
-    private func saveAppleUserToFirestore(
-        user: User,
-        fullName: PersonNameComponents?,
-        email: String?
-    ) async throws {
+    private func saveAppleUserToFirestore(user: User, fullName: PersonNameComponents?, email: String?) async throws {
         let db = Firestore.firestore()
-        let userRef = db.collection("users").document(user.uid)
         
+        // Prepare user data
         var userData: [String: Any] = [
             "uid": user.uid,
-            "providerID": "apple.com"
+            "email": user.email ?? email ?? "",
+            "createdAt": FieldValue.serverTimestamp(),
+            "isAdmin": false
         ]
         
+        // Add full name if available
         if let fullName = fullName {
-            userData["firstName"] = fullName.givenName ?? ""
-            userData["lastName"] = fullName.familyName ?? ""
+            userData["displayName"] = [fullName.givenName, fullName.familyName]
+                .compactMap { $0 }
+                .joined(separator: " ")
         }
         
-        if let email = email {
-            userData["email"] = email
+        // Save to Firestore
+        do {
+            try await db.collection("users").document(user.uid).setData(userData, merge: true)
+        } catch {
+            print("Error saving Apple user to Firestore: \(error.localizedDescription)")
+            throw error
         }
-        
-        try await userRef.setData(userData, merge: true)
     }
     
     private func randomNonceString(length: Int = 32) -> String {
@@ -323,7 +401,8 @@ class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthor
     }
     
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        guard let window = UIApplication.shared.windows.first else {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
             fatalError("No window found")
         }
         return window

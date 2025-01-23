@@ -14,12 +14,12 @@
 		</dict>
 	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>FirebaseAnalyticsEnabled</key>
 	<true/>
 	<key>FirebaseAutomaticScreenReportingEnabled</key>
 	<true/>
 	<key>FirebaseMessagingAutoInitEnabled</key>
-	<true/>
-	<key>FirebaseAnalyticsEnabled</key>
 	<true/>
 	<key>GIDClientID</key>
 	<string>267200779280-te4or6r0pivmfgbdfdh7arlhlkc5sb9e.apps.googleusercontent.com</string>

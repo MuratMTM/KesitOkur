@@ -100,12 +100,9 @@ struct LoginPageView: View {
                             // Google Sign In
                             Button(action: {
                                 Task {
-                                    do {
-                                        try await authManager.signInWithGoogle()
-                                    } catch {
-                                        showError = true
-                                        errorMessage = error.localizedDescription
-                                    }
+                                   
+                                         authManager.signInWithGoogle()
+                                    
                                 }
                             }) {
                                 HStack {
