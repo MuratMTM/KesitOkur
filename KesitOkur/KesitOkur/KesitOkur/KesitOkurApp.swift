@@ -21,6 +21,7 @@ import FirebaseAnalytics
 import FirebaseInAppMessaging
 import UserNotifications
 import FirebaseMessaging
+import Reachability
 
 // Use a factory method instead of a class
 class AppCheckProviderFactoryImpl: NSObject, AppCheckProviderFactory{
@@ -43,6 +44,18 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Configure App Check
         let providerFactory = AppCheckProviderFactoryImpl()
         AppCheck.setAppCheckProviderFactory(providerFactory)
+        
+        // Configure Firebase Analytics
+        Analytics.setAnalyticsCollectionEnabled(true)
+        
+        // Configure Firebase In-App Messaging
+        InAppMessaging.inAppMessaging().isAutomaticDataCollectionEnabled = true
+        
+        // Configure Firestore
+        let settings = FirestoreSettings()
+        settings.isPersistenceEnabled = true
+        settings.cacheSizeBytes = FirestoreCacheSizeUnlimited
+        Firestore.firestore().settings = settings
         
         // Configure Google Sign-In
         guard let clientID = FirebaseApp.app()?.options.clientID else {
@@ -73,7 +86,33 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         
         application.registerForRemoteNotifications()
         
+        // Network Reachability
+        setupNetworkReachability()
+        
         return true
+    }
+    
+    private func setupNetworkReachability() {
+        let reachability = try? Reachability()
+        
+        reachability?.whenReachable = { reachability in
+            if reachability.connection == .wifi {
+                print("Reachable via WiFi")
+            } else {
+                print("Reachable via Cellular")
+            }
+        }
+        
+        reachability?.whenUnreachable = { _ in
+            print("Network unreachable")
+            // Optionally show a network error to the user
+        }
+        
+        do {
+            try reachability?.startNotifier()
+        } catch {
+            print("Unable to start notifier")
+        }
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {

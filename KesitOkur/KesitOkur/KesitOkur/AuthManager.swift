@@ -110,15 +110,15 @@ class AuthManager: ObservableObject {
                 }
             }
             
-            guard let user = result.user,
-                  let idToken = user.idToken?.tokenString else {
+            // Check if the user object exists and has an ID token
+            guard let idToken = result.user.idToken?.tokenString else {
                 throw NSError(domain: "GoogleSignIn", 
                               code: -3, 
                               userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve Google user or ID token"])
             }
             
             let credential = GoogleAuthProvider.credential(withIDToken: idToken,
-                                                           accessToken: user.accessToken.tokenString)
+                                                           accessToken: result.user.accessToken.tokenString)
             
             let authResult = try await Auth.auth().signIn(with: credential)
             
@@ -201,63 +201,44 @@ class AuthManager: ObservableObject {
         request.requestedScopes = [.fullName, .email]
         request.nonce = sha256(nonce)
         
+        let authorizationController = ASAuthorizationController(authorizationRequests: [request])
+        let delegate = AppleSignInDelegate()
+        authorizationController.delegate = delegate
+        authorizationController.presentationContextProvider = delegate
+        
         do {
-            let result = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<ASAuthorization, Error>) in
-                let controller = ASAuthorizationController(authorizationRequests: [request])
-                let delegate = AppleSignInDelegate(continuation: continuation)
-                controller.delegate = delegate
-                controller.presentationContextProvider = delegate
-                controller.performRequests()
-                
-                // Store delegate to prevent it from being deallocated
-                objc_setAssociatedObject(controller, "delegate", delegate, .OBJC_ASSOCIATION_RETAIN)
+            let authorization = try await withCheckedThrowingContinuation { continuation in
+                delegate.continuation = continuation
+                authorizationController.performRequests()
             }
             
-            guard let appleIDCredential = result.credential as? ASAuthorizationAppleIDCredential,
-                  let appleIDToken = appleIDCredential.identityToken,
-                  let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to fetch identity token"])
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let identityToken = appleIDCredential.identityToken,
+                  let identityTokenString = String(data: identityToken, encoding: .utf8) else {
+                throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve Apple ID credentials"])
             }
             
-            let credential = OAuthProvider.credential(
-                providerID: .apple,
-                idToken: idTokenString,
-                rawNonce: nonce
-            )
+            let credential = OAuthProvider.credential(withProviderID: "apple.com",
+                                                      idToken: identityTokenString,
+                                                      rawNonce: nonce)
             
             let authResult = try await Auth.auth().signIn(with: credential)
-            let firebaseUser = authResult.user
             
-            // Create profile change request
-            let changeRequest = firebaseUser.createProfileChangeRequest()
-            
-            // Update display name if full name is available
-            if let fullName = appleIDCredential.fullName {
-                let displayName = [fullName.givenName, fullName.familyName]
-                    .compactMap { $0 }
-                    .joined(separator: " ")
-                
-                changeRequest.displayName = displayName
-            }
-            
-            // Commit profile changes
-            try await changeRequest.commitChanges()
-            
-            // Save user information to Firestore
+            // Save user to Firestore
             try await saveAppleUserToFirestore(
-                user: firebaseUser,
-                fullName: appleIDCredential.fullName,
+                user: authResult.user, 
+                fullName: appleIDCredential.fullName, 
                 email: appleIDCredential.email
             )
             
             // Update local state
             await MainActor.run {
-                self.user = firebaseUser
+                self.user = authResult.user
                 self.isAuthenticated = true
                 self.errorMessage = nil
             }
             
-            print("Successfully signed in with Apple: \(firebaseUser.uid)")
+            print("Successfully signed in with Apple: \(authResult.user.uid)")
             
         } catch {
             // Detailed error handling
@@ -394,12 +375,8 @@ class AuthManager: ObservableObject {
 }
 
 class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
-    private let continuation: CheckedContinuation<ASAuthorization, Error>
-    
-    init(continuation: CheckedContinuation<ASAuthorization, Error>) {
-        self.continuation = continuation
-    }
-    
+    var continuation: CheckedContinuation<ASAuthorization, Error>?
+
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else {
@@ -409,11 +386,11 @@ class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthor
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-        continuation.resume(returning: authorization)
+        continuation?.resume(returning: authorization)
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        continuation.resume(throwing: error)
+        continuation?.resume(throwing: error)
     }
 }
 

@@ -8,24 +8,18 @@ struct ContentView: View {
     var body: some View {
         Group {
             if authManager.isAuthenticated {
-                // Main app content
                 MainScreenView()
                     .environmentObject(authManager)
             } else {
-                // Login view
                 LoginPageView()
                     .environmentObject(authManager)
             }
         }
-        .alert("Error", isPresented: .constant(authManager.errorMessage != nil)) {
-            Button("OK") {
-                authManager.errorMessage = nil
-            }
-        } message: {
-            Text(authManager.errorMessage ?? "")
-        }
         .onOpenURL { url in
             GIDSignIn.sharedInstance.handle(url)
+        }
+        .onChange(of: authManager.isAuthenticated) { newValue in
+            print("Authentication state changed: \(newValue)")
         }
     }
 }
@@ -33,6 +27,5 @@ struct ContentView: View {
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-            .environmentObject(AuthManager())
     }
 }

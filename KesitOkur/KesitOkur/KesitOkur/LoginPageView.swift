@@ -5,185 +5,294 @@ import GoogleSignInSwift
 import AuthenticationServices
 
 struct LoginPageView: View {
+    // MARK: - State Properties
     @StateObject private var authManager = AuthManager()
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showingSignUp = false
+    @State private var isLoading = false
     
+    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
-            ScrollView(showsIndicators: false) {
-                ZStack {
-                    // Background
-                    Image(KesitOkurAppLoginPageTexts().booksImageText)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(minWidth: geometry.size.width, minHeight: geometry.size.height)
-                        .ignoresSafeArea()
-                    
-                    // Content
-                    VStack(spacing: geometry.size.height * 0.02) {
-                        Spacer(minLength: geometry.size.height * 0.05)
-                        
-                        // Profile Image and App Name
-                        ProfileImageView(imageName: KesitOkurAppLoginPageTexts().profilePhotoImageText)
-                            .frame(width: min(geometry.size.width * 0.3, 120),
-                                   height: min(geometry.size.width * 0.3, 120))
-                        
-                        AppNameTextView(appName: KesitOkurAppLoginPageTexts().appNameText)
-                            .padding(.bottom, geometry.size.height * 0.01)
-                        
-                        // Login Fields
-                        VStack(spacing: 12) {
-                            // Email Field
-                            TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $email)
-                                .textFieldStyle(CustomTextFieldStyle())
-                                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
-                                .textInputAutocapitalization(.never)
-                                .keyboardType(.emailAddress)
-                                .foregroundColor(.black)
-                            
-                            // Password Field
-                            SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
-                                .textFieldStyle(CustomTextFieldStyle())
-                                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
-                                .foregroundColor(.black)
-                        }
-                        .padding(.horizontal)
-                        
-                        // Forgot Password
-                        Text(KesitOkurAppLoginPageTexts().forgotPasswordText)
-                            .font(.system(size: min(12, geometry.size.width * 0.03), weight: .light))
-                            .padding(.top, 5)
-                        
-                        // Sign In Button
-                        LoginButton(width: min(geometry.size.width * 0.85, 400),
-                                  height: min(50, geometry.size.height * 0.06),
-                                  title: KesitOkurAppLoginPageTexts().signInButtonText) {
-                            Task {
-                                do {
-                                    try await authManager.signInWithEmail(email: email, password: password)
-                                } catch {
-                                    showError = true
-                                    errorMessage = error.localizedDescription
-                                }
-                            }
-                        }
-                        
-                        // Divider
-                        HStack {
-                            Rectangle()
-                                .frame(height: 1)
-                            Text("veya")
-                                .foregroundColor(.black.opacity(0.6))
-                                .font(.system(size: min(14, geometry.size.width * 0.035)))
-                            Rectangle()
-                                .frame(height: 1)
-                        }
-                        .foregroundColor(.black.opacity(0.3))
-                        .frame(width: min(geometry.size.width * 0.85, 400))
-                        .padding(.vertical, geometry.size.height * 0.01)
-                        
-                        // Social Login Buttons
-                        VStack(spacing: min(12, geometry.size.height * 0.015)) {
-                            // Sign Up Button
-                            LoginButton(width: min(geometry.size.width * 0.85, 400),
-                                      height: min(50, geometry.size.height * 0.06),
-                                      backgroundColor: .black,
-                                      foregroundColor: .white,
-                                      title: "Kayıt Ol") {
-                                showingSignUp = true
-                            }
-                            
-                            // Google Sign In
-                            Button(action: {
-                                Task {
-                                   
-                                         authManager.signInWithGoogle()
-                                    
-                                }
-                            }) {
-                                HStack {
-                                    Image("googleLogo")
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: min(20, geometry.size.width * 0.05),
-                                               height: min(20, geometry.size.width * 0.05))
-                                    Text("Google ile Devam Et")
-                                        .font(.system(size: min(16, geometry.size.width * 0.04), weight: .semibold))
-                                }
-                                .frame(width: min(geometry.size.width * 0.85, 400),
-                                       height: min(50, geometry.size.height * 0.06))
-                                .background(Color.white)
-                                .foregroundColor(.black)
-                                .cornerRadius(10)
-                                .shadow(color: .black.opacity(0.1), radius: 3)
-                            }
-                            
-                            // Apple Sign In
-                            SignInWithAppleButton(
-                                onRequest: { request in
-                                    request.requestedScopes = [.fullName, .email]
-                                },
-                                onCompletion: { result in
-                                    Task {
-                                        do {
-                                            try await authManager.signInWithApple()
-                                        } catch {
-                                            showError = true
-                                            errorMessage = error.localizedDescription
-                                        }
-                                    }
-                                }
-                            )
-                            .frame(width: min(geometry.size.width * 0.85, 400),
-                                   height: min(50, geometry.size.height * 0.06))
-                            .cornerRadius(10)
-                        }
-                        
-                        Spacer(minLength: geometry.size.height * 0.05)
-                    }
-                    .padding(.horizontal)
+            ZStack {
+                // Background
+                backgroundView(geometry: geometry)
+                
+                // Content
+                ScrollView(showsIndicators: false) {
+                    loginContentView(geometry: geometry)
                 }
             }
         }
         .edgesIgnoringSafeArea(.all)
-        .alert("Hata", isPresented: $showError) {
-            Button("Tamam", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
-        }
+        .errorAlert(isPresented: $showError, message: errorMessage)
         .sheet(isPresented: $showingSignUp) {
             SignUpView()
                 .environmentObject(authManager)
         }
     }
+    
+    // MARK: - Background View
+    private func backgroundView(geometry: GeometryProxy) -> some View {
+        Image(KesitOkurAppLoginPageTexts().booksImageText)
+            .resizable()
+            .scaledToFill()
+            .frame(minWidth: geometry.size.width, minHeight: geometry.size.height)
+            .ignoresSafeArea()
+    }
+    
+    // MARK: - Login Content View
+    private func loginContentView(geometry: GeometryProxy) -> some View {
+        VStack(spacing: geometry.size.height * 0.02) {
+            Spacer(minLength: geometry.size.height * 0.05)
+            
+            // Profile Image and App Name
+            ProfileImageView(imageName: KesitOkurAppLoginPageTexts().profilePhotoImageText)
+                .frame(width: min(geometry.size.width * 0.3, 120),
+                       height: min(geometry.size.width * 0.3, 120))
+            
+            AppNameTextView(appName: KesitOkurAppLoginPageTexts().appNameText)
+                .padding(.bottom, geometry.size.height * 0.01)
+            
+            // Login Fields
+            loginFieldsView(geometry: geometry)
+            
+            // Sign In Button
+            signInButton(geometry: geometry)
+            
+            // Divider
+            dividerView(geometry: geometry)
+            
+            // Social Login Buttons
+            socialLoginButtons(geometry: geometry)
+            
+            Spacer(minLength: geometry.size.height * 0.05)
+        }
+        .padding(.horizontal)
+    }
+    
+    // MARK: - Login Fields View
+    private func loginFieldsView(geometry: GeometryProxy) -> some View {
+        VStack(spacing: 12) {
+            // Email Field
+            TextField(KesitOkurAppLoginPageTexts().usernameBoxText, text: $email)
+                .textFieldStyle(CustomTextFieldStyle())
+                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+                .foregroundColor(.black)
+            
+            // Password Field
+            SecureField(KesitOkurAppLoginPageTexts().passwordBoxText, text: $password)
+                .textFieldStyle(CustomTextFieldStyle())
+                .frame(maxWidth: min(geometry.size.width * 0.85, 400))
+                .foregroundColor(.black)
+        }
+        .padding(.horizontal)
+    }
+    
+    // MARK: - Sign In Button
+    private func signInButton(geometry: GeometryProxy) -> some View {
+        LoginButton(
+            width: min(geometry.size.width * 0.85, 400),
+            height: min(50, geometry.size.height * 0.06),
+            title: KesitOkurAppLoginPageTexts().signInButtonText,
+            isLoading: isLoading
+        ) {
+            performEmailSignIn()
+        }
+    }
+    
+    // MARK: - Divider View
+    private func dividerView(geometry: GeometryProxy) -> some View {
+        HStack {
+            Rectangle()
+                .frame(height: 1)
+            Text("veya")
+                .foregroundColor(.black.opacity(0.6))
+                .font(.system(size: min(14, geometry.size.width * 0.035)))
+            Rectangle()
+                .frame(height: 1)
+        }
+        .foregroundColor(.black.opacity(0.3))
+        .frame(width: min(geometry.size.width * 0.85, 400))
+        .padding(.vertical, geometry.size.height * 0.01)
+    }
+    
+    // MARK: - Social Login Buttons
+    private func socialLoginButtons(geometry: GeometryProxy) -> some View {
+        VStack(spacing: min(12, geometry.size.height * 0.015)) {
+            // Sign Up Button
+            LoginButton(
+                width: min(geometry.size.width * 0.85, 400),
+                height: min(50, geometry.size.height * 0.06),
+                backgroundColor: .black,
+                foregroundColor: .white,
+                title: "Kayıt Ol"
+            ) {
+                showingSignUp = true
+            }
+            
+            // Google Sign In
+            googleSignInButton(geometry: geometry)
+            
+            // Apple Sign In
+            appleSignInButton(geometry: geometry)
+        }
+    }
+    
+    // MARK: - Google Sign In Button
+    private func googleSignInButton(geometry: GeometryProxy) -> some View {
+        Button(action: {
+            Task { @MainActor in
+                do {
+                    try await performGoogleSignIn()
+                } catch {
+                    showErrorMessage(error.localizedDescription)
+                }
+            }
+        }) {
+            HStack {
+                Image("googleLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: min(20, geometry.size.width * 0.05),
+                           height: min(20, geometry.size.width * 0.05))
+                Text("Google ile Devam Et")
+                    .font(.system(size: min(16, geometry.size.width * 0.04), weight: .semibold))
+            }
+            .frame(width: min(geometry.size.width * 0.85, 400),
+                   height: min(50, geometry.size.height * 0.06))
+            .background(Color.white)
+            .foregroundColor(.black)
+            .cornerRadius(10)
+            .shadow(color: .black.opacity(0.1), radius: 3)
+        }
+    }
+    
+    // MARK: - Perform Google Sign In
+    @MainActor
+    private func performGoogleSignIn() async throws {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            try await authManager.signInWithGoogle()
+        } catch {
+            throw error
+        }
+    }
+    
+    // MARK: - Apple Sign In Button
+    private func appleSignInButton(geometry: GeometryProxy) -> some View {
+        SignInWithAppleButton(
+            onRequest: { request in
+                request.requestedScopes = [.fullName, .email]
+            },
+            onCompletion: { result in
+                switch result {
+                case .success:
+                    Task { @MainActor in
+                        do {
+                            try await performAppleSignIn()
+                        } catch {
+                            showErrorMessage(error.localizedDescription)
+                        }
+                    }
+                case .failure(let error):
+                    showErrorMessage(error.localizedDescription)
+                }
+            }
+        )
+        .frame(width: min(geometry.size.width * 0.85, 400),
+               height: min(50, geometry.size.height * 0.06))
+        .cornerRadius(10)
+    }
+    
+    // MARK: - Perform Apple Sign In
+    @MainActor
+    private func performAppleSignIn() async throws {
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            try await authManager.signInWithApple()
+        } catch {
+            throw error
+        }
+    }
+    
+    // MARK: - Authentication Methods
+    private func performEmailSignIn() {
+        guard !email.isEmpty, !password.isEmpty else {
+            showErrorMessage("Email ve şifre boş bırakılamaz")
+            return
+        }
+        
+        isLoading = true
+        Task {
+            do {
+                try await authManager.signInWithEmail(email: email, password: password)
+                isLoading = false
+            } catch {
+                showErrorMessage(error.localizedDescription)
+                isLoading = false
+            }
+        }
+    }
+    
+    // MARK: - Error Handling
+    private func showErrorMessage(_ message: String) {
+        errorMessage = message
+        showError = true
+    }
 }
 
-// Custom Button Style
+// MARK: - Error Alert View Modifier
+extension View {
+    func errorAlert(isPresented: Binding<Bool>, message: String) -> some View {
+        self.alert("Hata", isPresented: isPresented) {
+            Button("Tamam", role: .cancel) { }
+        } message: {
+            Text(message)
+        }
+    }
+}
+
+// MARK: - Login Button
 struct LoginButton: View {
     let width: CGFloat
     let height: CGFloat
     var backgroundColor: Color = Color.yellow.opacity(0.8)
     var foregroundColor: Color = .black
     let title: String
+    var isLoading: Bool = false
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .frame(width: width, height: height)
-                .background(backgroundColor)
-                .foregroundColor(foregroundColor)
-                .cornerRadius(10)
-                .font(.system(size: min(16, width * 0.04), weight: .semibold))
+            Group {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: foregroundColor))
+                } else {
+                    Text(title)
+                }
+            }
+            .frame(width: width, height: height)
+            .background(backgroundColor)
+            .foregroundColor(foregroundColor)
+            .cornerRadius(10)
+            .font(.system(size: min(16, width * 0.04), weight: .semibold))
         }
+        .disabled(isLoading)
     }
 }
 
-// Custom TextField Style
+// MARK: - Custom TextField Style
 struct CustomTextFieldStyle: TextFieldStyle {
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
@@ -191,11 +300,12 @@ struct CustomTextFieldStyle: TextFieldStyle {
             .background(Color.white)
             .cornerRadius(10)
             .shadow(color: .black.opacity(0.1), radius: 3)
-            .tint(.black) // Sets the cursor and selection color
-            .accentColor(.black) // Sets the focus color
+            .tint(.black)
+            .accentColor(.black)
     }
 }
 
+// Placeholder for other view components
 struct ProfileImageView: View {
     let imageName: String
     
@@ -204,10 +314,6 @@ struct ProfileImageView: View {
             .resizable()
             .scaledToFit()
             .clipShape(Circle())
-            .overlay {
-                Circle().stroke(.yellow, lineWidth: 5)
-            }
-            .shadow(radius: 10)
     }
 }
 
@@ -216,9 +322,8 @@ struct AppNameTextView: View {
     
     var body: some View {
         Text(appName)
-            .font(.system(size: 16, weight: .bold))
-            .italic()
-            .padding(.bottom, 10)
+            .font(.title)
+            .fontWeight(.bold)
     }
 }
 
