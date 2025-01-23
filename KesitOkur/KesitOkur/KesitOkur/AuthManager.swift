@@ -30,16 +30,26 @@ class AuthManager: ObservableObject {
     private func setupAuthStateListener() {
         stateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
-                self?.isAuthenticated = user != nil
-                self?.user = user
-                
-                if let userId = user?.uid {
-                    await self?.checkAdminStatus(userId: userId)
-                } else {
-                    self?.isAdmin = false
-                }
+                self?.updateAuthenticationState(user: user)
             }
         }
+    }
+    
+    private func updateAuthenticationState(user: User?) {
+        self.user = user
+        self.isAuthenticated = user != nil
+        
+        if let userId = user?.uid {
+            Task {
+                await checkAdminStatus(userId: userId)
+            }
+        } else {
+            self.isAdmin = false
+        }
+        
+        print("Authentication State Updated:")
+        print("User: \(user?.uid ?? "None")")
+        print("Authenticated: \(isAuthenticated)")
     }
     
     private func checkAdminStatus(userId: String) async {
@@ -52,6 +62,7 @@ class AuthManager: ObservableObject {
             }
         } catch {
             self.errorMessage = error.localizedDescription
+            print("Admin Status Check Error: \(error.localizedDescription)")
         }
     }
     
@@ -61,8 +72,10 @@ class AuthManager: ObservableObject {
             let result = try await Auth.auth().signIn(withEmail: email, password: password)
             self.user = result.user
             self.isAuthenticated = true
+            print("Email Sign-In Successful: \(result.user.uid)")
         } catch {
             self.errorMessage = error.localizedDescription
+            print("Email Sign-In Error: \(error.localizedDescription)")
             throw error
         }
     }
@@ -73,6 +86,7 @@ class AuthManager: ObservableObject {
                 try await performGoogleSignIn()
             } catch {
                 self.errorMessage = error.localizedDescription
+                print("Google Sign-In Task Error: \(error.localizedDescription)")
             }
         }
     }
@@ -110,7 +124,6 @@ class AuthManager: ObservableObject {
                 }
             }
             
-            // Check if the user object exists and has an ID token
             guard let idToken = result.user.idToken?.tokenString else {
                 throw NSError(domain: "GoogleSignIn", 
                               code: -3, 
@@ -125,33 +138,9 @@ class AuthManager: ObservableObject {
             // Save user to Firestore
             try await saveGoogleUserToFirestore(user: authResult.user, googleUser: result.user)
             
-            // Update local state
-            await MainActor.run {
-                self.user = authResult.user
-                self.isAuthenticated = true
-                self.errorMessage = nil
-            }
-            
             print("Successfully signed in with Google: \(authResult.user.uid)")
             
         } catch {
-            // Detailed error handling
-            await MainActor.run {
-                if let authError = error as NSError?,
-                   authError.domain == "FIRAuthErrorDomain" {
-                    switch authError.code {
-                    case AuthErrorCode.invalidCredential.rawValue:
-                        self.errorMessage = "Invalid or expired authentication. Please try again."
-                    case AuthErrorCode.operationNotAllowed.rawValue:
-                        self.errorMessage = "Sign-in method not allowed. Please contact support."
-                    default:
-                        self.errorMessage = "Authentication failed. \(error.localizedDescription)"
-                    }
-                } else {
-                    self.errorMessage = "Sign-in failed. \(error.localizedDescription)"
-                }
-            }
-            
             print("Google Sign-In Error: \(error.localizedDescription)")
             throw error
         }
@@ -218,9 +207,11 @@ class AuthManager: ObservableObject {
                 throw NSError(domain: "AppleSignIn", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve Apple ID credentials"])
             }
             
-            let credential = OAuthProvider.credential(withProviderID: "apple.com",
-                                                      idToken: identityTokenString,
-                                                      rawNonce: nonce)
+            let credential = OAuthProvider.credential(
+                providerID: .apple, 
+                idToken: identityTokenString, 
+                rawNonce: nonce
+            )
             
             let authResult = try await Auth.auth().signIn(with: credential)
             
@@ -231,33 +222,9 @@ class AuthManager: ObservableObject {
                 email: appleIDCredential.email
             )
             
-            // Update local state
-            await MainActor.run {
-                self.user = authResult.user
-                self.isAuthenticated = true
-                self.errorMessage = nil
-            }
-            
             print("Successfully signed in with Apple: \(authResult.user.uid)")
             
         } catch {
-            // Detailed error handling
-            await MainActor.run {
-                if let authError = error as NSError?,
-                   authError.domain == "FIRAuthErrorDomain" {
-                    switch authError.code {
-                    case AuthErrorCode.invalidCredential.rawValue:
-                        self.errorMessage = "Invalid or expired authentication. Please try again."
-                    case AuthErrorCode.operationNotAllowed.rawValue:
-                        self.errorMessage = "Sign-in method not allowed. Please contact support."
-                    default:
-                        self.errorMessage = "Authentication failed. \(error.localizedDescription)"
-                    }
-                } else {
-                    self.errorMessage = "Sign-in failed. \(error.localizedDescription)"
-                }
-            }
-            
             print("Apple Sign-In Error: \(error.localizedDescription)")
             throw error
         }
@@ -378,8 +345,8 @@ class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthor
     var continuation: CheckedContinuation<ASAuthorization, Error>?
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = scene.windows.first else {
             fatalError("No window found")
         }
         return window

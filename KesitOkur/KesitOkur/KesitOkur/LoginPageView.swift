@@ -6,7 +6,7 @@ import AuthenticationServices
 
 struct LoginPageView: View {
     // MARK: - State Properties
-    @StateObject private var authManager = AuthManager()
+    @EnvironmentObject var authManager: AuthManager
     @State private var email: String = ""
     @State private var password: String = ""
     @State private var showError = false
@@ -181,7 +181,9 @@ struct LoginPageView: View {
         
         do {
             try await authManager.signInWithGoogle()
+            // No need to explicitly set isAuthenticated, AuthManager handles this
         } catch {
+            showErrorMessage(error.localizedDescription)
             throw error
         }
     }
@@ -220,7 +222,9 @@ struct LoginPageView: View {
         
         do {
             try await authManager.signInWithApple()
+            // No need to explicitly set isAuthenticated, AuthManager handles this
         } catch {
+            showErrorMessage(error.localizedDescription)
             throw error
         }
     }
@@ -233,7 +237,7 @@ struct LoginPageView: View {
         }
         
         isLoading = true
-        Task {
+        Task { @MainActor in
             do {
                 try await authManager.signInWithEmail(email: email, password: password)
                 isLoading = false
@@ -394,5 +398,6 @@ struct SignInLogo {
 struct LoginPageView_Previews: PreviewProvider {
     static var previews: some View {
         LoginPageView()
+            .environmentObject(AuthManager())
     }
 }
