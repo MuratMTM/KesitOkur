@@ -199,10 +199,10 @@ struct FavoriteButton: View {
     @EnvironmentObject private var favoritesManager: FavoritesManager
     var body: some View {
         Button(action: {
-            favoritesManager.toggleFavorite(book: book)
+            favoritesManager.toggleFavoriteBook(book: book)
         }) {
-            Image(systemName: favoritesManager.isFavorite(book: book) ? "heart.fill" : "heart")
-                .foregroundColor(favoritesManager.isFavorite(book: book) ? .red : .black)
+            Image(systemName: favoritesManager.favoriteBooks.contains(book) ? "heart.fill" : "heart")
+                .foregroundColor(favoritesManager.favoriteBooks.contains(book) ? .red : .black)
                 .padding(.trailing, 10)
         }
     }
@@ -285,4 +285,3 @@ struct BookDetailView: View {
     MainScreenView()
         .environmentObject(FavoritesManager())
 }
-

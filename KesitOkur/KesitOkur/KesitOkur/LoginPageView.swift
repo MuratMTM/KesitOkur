@@ -12,7 +12,7 @@ struct LoginPageView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showingSignUp = false
-    @State private var isLoading = false
+    @State private var isLoading: Bool = false
     
     // MARK: - Body
     var body: some View {
@@ -179,12 +179,11 @@ struct LoginPageView: View {
         isLoading = true
         defer { isLoading = false }
         
-        do {
-            try await authManager.signInWithGoogle()
-            // No need to explicitly set isAuthenticated, AuthManager handles this
-        } catch {
-            showErrorMessage(error.localizedDescription)
-            throw error
+        Task{
+           
+                 authManager.signInWithGoogle()
+                // No need to explicitly set isAuthenticated, AuthManager handles this
+            
         }
     }
     
@@ -196,10 +195,10 @@ struct LoginPageView: View {
             },
             onCompletion: { result in
                 switch result {
-                case .success:
+                case .success(let authResults):
                     Task { @MainActor in
                         do {
-                            try await performAppleSignIn()
+                            try await authManager.signInWithApple()
                         } catch {
                             showErrorMessage(error.localizedDescription)
                         }

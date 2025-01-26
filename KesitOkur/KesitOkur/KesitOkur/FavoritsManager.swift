@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import SwiftUI
 
 class FavoritesManager: ObservableObject {
     @Published var favoriteBooks: Set<Book> = []
+    @Published var favoriteQuotes: Set<Quote> = []
     
-    func toggleFavorite(book: Book) {
+    func toggleFavoriteBook(book: Book) {
         if favoriteBooks.contains(book) {
             favoriteBooks.remove(book)
         } else {
@@ -18,7 +20,27 @@ class FavoritesManager: ObservableObject {
         }
     }
     
-    func isFavorite(book: Book) -> Bool {
+    func toggleFavoriteQuote(quote: Quote) {
+        if favoriteQuotes.contains(quote) {
+            favoriteQuotes.remove(quote)
+        } else {
+            favoriteQuotes.insert(quote)
+        }
+    }
+    
+    func isFavoriteBook(book: Book) -> Bool {
         favoriteBooks.contains(book)
+    }
+    
+    func isFavoriteQuote(quote: Quote) -> Bool {
+        favoriteQuotes.contains(quote)
+    }
+    
+    func removeBookFromFavorites(_ book: Book) {
+        favoriteBooks.remove(book)
+    }
+    
+    func removeQuoteFromFavorites(_ quote: Quote) {
+        favoriteQuotes.remove(quote)
     }
 }

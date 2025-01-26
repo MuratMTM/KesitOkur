@@ -1,93 +1,109 @@
-//
-//  FavoritPageView.swift
-//  KesitOkur
-//
-//  Created by Murat Işık on 3.01.2025.
-//
-
 import SwiftUI
+import Kingfisher
+import Firebase
 
 struct FavoritePageView: View {
-    @EnvironmentObject var favoritesManager: FavoritesManager
-    
+    @StateObject private var favoritesManager = FavoritesManager()
+    @State private var selectedTab = 0
+
     var body: some View {
         NavigationView {
-            ZStack {
-                // Background gradient matching other views
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color(red: 1, green: 0.85, blue: 0.4),  // Warm yellow
-                        Color.white
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-                
-                if favoritesManager.favoriteBooks.isEmpty {
-                    EmptyFavoriteView()
+            VStack {
+                Picker("Favorites", selection: $selectedTab) {
+                    Text("Kitaplar").tag(0)
+                    Text("Alıntılar").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .padding()
+
+                if selectedTab == 0 {
+                    FavoriteBooksView(favoritesManager: favoritesManager)
                 } else {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            ForEach(Array(favoritesManager.favoriteBooks)) { book in
-                                NavigationLink(destination: BookDetailView(book: book)) {
-                                    HStack(spacing: 25) {
-                                        AsyncImage(url: URL(string: book.bookCover)) { image in
-                                            image
-                                                .resizable()
-                                                .frame(width: 75, height: 100)
-                                        } placeholder: {
-                                            ProgressView()
-                                        }
-                                        .cornerRadius(5)
-                                        
-                                        BookInfoView(book: book)
-                                        
-                                        FavoriteButton(book: book)
-                                    }
-                                    .padding()
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(Color.customCard)
-                                            .shadow(color: .customShadow, radius: 8, x: 0, y: 4)
-                                    )
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
-                        .padding(.vertical)
-                    }
+                    FavoriteQuotesView(favoritesManager: favoritesManager)
                 }
             }
             .navigationTitle("Favoriler")
         }
+        .environmentObject(favoritesManager)
     }
 }
 
-struct EmptyFavoriteView: View {
+struct FavoriteQuotesView: View {
+    @ObservedObject var favoritesManager: FavoritesManager
+
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "heart.slash")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 60, height: 60)
-                .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.15))
-            
-            Text("Henüz favori kitabınız yok")
-                .font(.title2)
-                .bold()
-                .foregroundColor(.black)
-            
-            Text("Kitapları favorilere ekleyerek burada görüntüleyebilirsiniz")
-                .font(.body)
-                .foregroundColor(Color(red: 0.1, green: 0.1, blue: 0.3))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+        List {
+            if favoritesManager.favoriteQuotes.isEmpty {
+                Text("Henüz favori alıntınız yok")
+            } else {
+                ForEach(Array(favoritesManager.favoriteQuotes), id: \.id) { quote in
+                    QuoteItemView(quote: quote, favoritesManager: favoritesManager)
+                }
+            }
+        }
+    }
+}
+
+struct QuoteItemView: View {
+    let quote: Quote
+    @ObservedObject var favoritesManager: FavoritesManager
+
+    var body: some View {
+        HStack {
+            if let url = URL(string: quote.url) {
+                KFImage(url)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+            }
+            Text(quote.text)
+            Button("Sil") {
+                favoritesManager.toggleFavoriteQuote(quote: quote)
+            }
+        }
+    }
+}
+
+struct FavoriteBooksView: View {
+    @ObservedObject var favoritesManager: FavoritesManager
+
+    var body: some View {
+        List {
+            if favoritesManager.favoriteBooks.isEmpty {
+                Text("Henüz favori kitabınız yok")
+            } else {
+                ForEach(Array(favoritesManager.favoriteBooks), id: \.id) { book in
+                    BookItemView(book: book, favoritesManager: favoritesManager)
+                }
+            }
+        }
+    }
+}
+
+struct BookItemView: View {
+    let book: Book
+    @ObservedObject var favoritesManager: FavoritesManager
+
+    var body: some View {
+        HStack {
+            if let url = URL(string: book.bookCover) {
+                KFImage(url)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 150)
+            }
+
+            VStack(alignment: .leading) {
+                Text(book.bookName)
+                Text(book.authorName)
+            }
+            Button("Sil") {
+                favoritesManager.toggleFavoriteBook(book: book)
+            }
         }
     }
 }
 
 #Preview {
     FavoritePageView()
-        .environmentObject(FavoritesManager())
 }

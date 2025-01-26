@@ -1,5 +1,17 @@
 {
+  "name": "kesitokur-data-upload",
+  "version": "1.0.0",
+  "description": "Data upload utility for KesitOkur app",
+  "main": "uploadDataToFirestore.js",
+  "scripts": {
+    "upload": "node uploadDataToFirestore.js"
+  },
   "dependencies": {
-    "firebase-admin": "^13.0.2"
+    "firebase-admin": "^13.0.2",
+    "fs-extra": "^11.2.0",
+    "google-auth-library": "^9.15.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
