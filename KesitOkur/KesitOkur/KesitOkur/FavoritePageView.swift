@@ -58,7 +58,19 @@ struct QuoteItemView: View {
             }
             Text(quote.text)
             Button("Sil") {
-                favoritesManager.toggleFavoriteQuote(quote: quote)
+                // Create a dummy book if no book is associated
+                let dummyBook = Book(
+                    id: "dummy_book_id", 
+                    bookCover: "", 
+                    bookName: "Dummy Book", 
+                    authorName: "Unknown", 
+                    publishYear: "", 
+                    edition: "", 
+                    pages: "", 
+                    description: "", 
+                    excerpts: []
+                )
+                favoritesManager.toggleFavoriteQuote(quote: quote, book: dummyBook)
             }
         }
     }

@@ -35,13 +35,12 @@ class BooksViewModel: ObservableObject {
                     let data = doc.data()
                     return Book(
                         id: doc.documentID,
-                        bookCover: data["bookCover"] as? String ?? "",
-                        bookName: data["bookName"] as? String ?? "",
-                        authorName: data["authorName"] as? String ?? "",
-                        publishYear: data["publishYear"] as? String ?? "",
-                        edition: data["edition"] as? String ?? "",
-                        pages: data["pages"] as? String ?? "",
+                        title: data["bookName"] as? String ?? "",
+                        author: data["authorName"] as? String ?? "",
+                        coverImage: data["bookCover"] as? String ?? "",
                         description: data["description"] as? String ?? "",
+                        quotes: nil,
+                        favoriteQuotes: nil,
                         excerpts: data["excerpts"] as? [String] ?? []
                     )
                 }

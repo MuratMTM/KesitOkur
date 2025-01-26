@@ -195,7 +195,7 @@ struct LoginPageView: View {
             },
             onCompletion: { result in
                 switch result {
-                case .success(let authResults):
+                case .success(_):
                     Task { @MainActor in
                         do {
                             try await authManager.signInWithApple()
@@ -209,7 +209,8 @@ struct LoginPageView: View {
             }
         )
         .frame(width: min(geometry.size.width * 0.85, 400),
-               height: min(50, geometry.size.height * 0.06))
+               height: min(geometry.size.height * 0.06, 50),
+               alignment: .center)
         .cornerRadius(10)
     }
     

@@ -1,10 +1,3 @@
-//
-//  ExcerptsView.swift
-//  KesitOkur
-//
-//  Created by Murat Işık on 14.01.2025.
-//
-
 import SwiftUI
 
 struct ExcerptsView: View {
@@ -56,8 +49,10 @@ struct ExcerptsView: View {
         }
     }
 }
+
+// Fixed Preview with sample book data
 #Preview {
-    ExcerptsView(book:Book(
+    ExcerptsView(book: Book(
         id: "1",
         bookCover: "https://example.com/cover.jpg",
         bookName: "Sample Book",
@@ -71,4 +66,4 @@ struct ExcerptsView: View {
             "https://example.com/excerpt2.jpg"
         ]
     ))
-}
+} 

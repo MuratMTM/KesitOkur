@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Firebase
 import FirebaseFirestore
+import FirebaseAuth
 
 class FavoritesManager: ObservableObject {
     @Published var favoriteBooks: Set<Book> = []
@@ -21,9 +22,9 @@ class FavoritesManager: ObservableObject {
         
         let bookData: [String: Any] = [
             "id": book.id,
-            "title": book.title,
-            "author": book.author,
-            "coverImage": book.coverImage,
+            "bookName": book.bookName,
+            "authorName": book.authorName,
+            "bookCover": book.bookCover,
             "description": book.description
         ]
         
@@ -65,10 +66,14 @@ class FavoritesManager: ObservableObject {
                 let data = doc.data()
                 return Book(
                     id: data["id"] as? String ?? "",
-                    title: data["title"] as? String ?? "",
-                    author: data["author"] as? String ?? "",
-                    coverImage: data["coverImage"] as? String ?? "",
-                    description: data["description"] as? String ?? ""
+                    bookCover: data["bookCover"] as? String ?? "",
+                    bookName: data["bookName"] as? String ?? "",
+                    authorName: data["authorName"] as? String ?? "",
+                    publishYear: "",
+                    edition: "",
+                    pages: "",
+                    description: data["description"] as? String ?? "",
+                    excerpts: []
                 )
             })
         }
@@ -80,17 +85,20 @@ class FavoritesManager: ObservableObject {
         guard let userId = auth.currentUser?.uid else { return }
         
         let quoteData: [String: Any] = [
-            "id": quote.id.uuidString,
+            "id": quote.id,
             "url": quote.url,
+            "text": quote.text,
             "bookId": book.id
         ]
         
-        db.collection("users").document(userId).collection("favoriteQuotes").document(quote.id.uuidString).setData(quoteData) { error in
+        db.collection("users").document(userId).collection("favoriteQuotes").document(quote.id).setData(quoteData) { error in
             if let error = error {
                 print("Error adding quote to favorites: \(error)")
             } else {
                 DispatchQueue.main.async {
-                    self.favoriteQuotes.insert(quote)
+                    var updatedQuote = quote
+                    updatedQuote.isFavorite = true
+                    self.favoriteQuotes.insert(updatedQuote)
                 }
             }
         }
@@ -99,11 +107,13 @@ class FavoritesManager: ObservableObject {
     func removeQuoteFromFavorites(_ quote: Quote) {
         guard let userId = auth.currentUser?.uid else { return }
         
-        db.collection("users").document(userId).collection("favoriteQuotes").document(quote.id.uuidString).delete { error in
+        db.collection("users").document(userId).collection("favoriteQuotes").document(quote.id).delete { error in
             if let error = error {
                 print("Error removing quote from favorites: \(error)")
             } else {
                 DispatchQueue.main.async {
+                    var updatedQuote = quote
+                    updatedQuote.isFavorite = false
                     self.favoriteQuotes.remove(quote)
                 }
             }
@@ -122,7 +132,9 @@ class FavoritesManager: ObservableObject {
             self.favoriteQuotes = Set(documents.compactMap { doc -> Quote? in
                 let data = doc.data()
                 return Quote(
+                    id: data["id"] as? String ?? UUID().uuidString,
                     url: data["url"] as? String ?? "",
+                    text: data["text"] as? String ?? "",
                     isFavorite: true
                 )
             })
@@ -131,17 +143,17 @@ class FavoritesManager: ObservableObject {
     
     func toggleFavoriteBook(book: Book) {
         if favoriteBooks.contains(book) {
-            favoriteBooks.remove(book)
+            removeBookFromFavorites(book)
         } else {
-            favoriteBooks.insert(book)
+            addBookToFavorites(book)
         }
     }
     
-    func toggleFavoriteQuote(quote: Quote) {
+    func toggleFavoriteQuote(quote: Quote, book: Book) {
         if favoriteQuotes.contains(quote) {
-            favoriteQuotes.remove(quote)
+            removeQuoteFromFavorites(quote)
         } else {
-            favoriteQuotes.insert(quote)
+            addQuoteToFavorites(quote, book: book)
         }
     }
     
@@ -151,13 +163,5 @@ class FavoritesManager: ObservableObject {
     
     func isFavoriteQuote(quote: Quote) -> Bool {
         favoriteQuotes.contains(quote)
-    }
-    
-    func removeBookFromFavorites(_ book: Book) {
-        favoriteBooks.remove(book)
-    }
-    
-    func removeQuoteFromFavorites(_ quote: Quote) {
-        favoriteQuotes.remove(quote)
     }
 }
