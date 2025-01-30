@@ -149,26 +149,28 @@ class AdminBookViewModel: ObservableObject {
     }
     
     // Delete a Specific Excerpt
-    func deleteExcerpt(_ excerptURL: String) async {
-        guard let book = currentBook else { return }
+    func deleteExcerpt(_ url: String) async {
+        guard let user = user else { return }
         
         do {
-            let bookRef = db.collection("books").document(book.id)
-            
-            // Remove excerpt URL from Firestore
-            try await bookRef.updateData([
-                "excerpts": FieldValue.arrayRemove([excerptURL])
-            ])
-            
-            // Delete image from Storage
-            let storageRef = storage.reference(forURL: excerptURL)
+            let storageRef = storage.reference(forURL: url)
             try await storageRef.delete()
             
+            // Remove from Firestore
+            let bookRef = db.collection("books").document(currentBook?.id ?? "")
+            try await bookRef.updateData([
+                "excerpts": FieldValue.arrayRemove([url])
+            ])
         } catch {
-            await MainActor.run {
-                self.errorMessage = "Failed to delete excerpt: \(error.localizedDescription)"
-            }
+            print("Error deleting excerpt: \(error)")
         }
+    }
+    
+    // Convert Firebase Storage URL to downloadable HTTPS URL
+    func getDownloadURL(from gsURL: String) async throws -> String {
+        let storageRef = storage.reference(forURL: gsURL)
+        let downloadURL = try await storageRef.downloadURL()
+        return downloadURL.absoluteString
     }
     
     // Get Top View Controller (for Google Sign-In)

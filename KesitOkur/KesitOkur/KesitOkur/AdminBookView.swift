@@ -225,17 +225,26 @@ struct ExcerptsList: View {
 struct ExcerptRow: View {
     let imageURL: String
     let onDelete: () -> Void
-    @State private var isDeleting = false
+    @State private var downloadableURL: URL?
+    @StateObject private var viewModel = AdminBookViewModel()
+    @State private var isLoadingURL = false
     
     var body: some View {
         HStack {
-            AsyncImage(url: URL(string: imageURL)) { image in
-                image
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 60)
-            } placeholder: {
+            if isLoadingURL {
                 ProgressView()
+            } else if let url = downloadableURL {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 60)
+                } placeholder: {
+                    ProgressView()
+                }
+            } else {
+                Text("Image Error")
+                    .foregroundColor(.red)
             }
             
             Spacer()
@@ -243,18 +252,28 @@ struct ExcerptRow: View {
             Button {
                 onDelete()
             } label: {
-                if isDeleting {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .red))
-                } else {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                }
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
             }
-            .disabled(isDeleting)
             .padding()
             .background(Color.white.opacity(0.9))
             .cornerRadius(10)
+        }
+        .onAppear {
+            Task {
+                isLoadingURL = true
+                do {
+                    if imageURL.starts(with: "gs://") {
+                        let httpURL = try await viewModel.getDownloadURL(from: imageURL)
+                        downloadableURL = URL(string: httpURL)
+                    } else {
+                        downloadableURL = URL(string: imageURL)
+                    }
+                } catch {
+                    print("Error converting URL: \(error)")
+                }
+                isLoadingURL = false
+            }
         }
     }
 }
