@@ -52,12 +52,18 @@ app.post('/books/sync', async (req, res) => {
 // Books Routes
 app.get('/books', async (req, res) => {
   try {
-    const booksSnapshot = await db.collection('books').get();
-    const books = booksSnapshot.docs.map(doc => ({
+    const booksRef = db.collection('books');
+    const snapshot = await booksRef.get();
+
+    const books = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-    res.json(books);
+
+    res.json({ 
+      books,
+      totalBooks: books.length
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -173,17 +179,57 @@ app.delete('/books/:id', async (req, res) => {
 });
 
 app.post('/books/:bookId/quotes', upload.single('quote'), async (req, res) => {
+  console.log('Quote upload request received');
+  console.log('Request details:', {
+    bookId: req.params.bookId,
+    files: req.file ? {
+      fieldname: req.file.fieldname,
+      originalname: req.file.originalname,
+      encoding: req.file.encoding,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    } : 'No file',
+    body: req.body
+  });
+
   try {
     const bookId = req.params.bookId;
     const file = req.file;
+    const tags = req.body.tags ? req.body.tags.split(',').map(tag => tag.trim()) : [];
 
     if (!file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      console.error('No file uploaded');
+      return res.status(400).json({ 
+        error: 'No file uploaded', 
+        details: 'Please select a file to upload' 
+      });
     }
 
-    const filename = `book_quotes/${bookId}/${Date.now()}_${file.originalname}`;
+    // Validate file type (optional)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      console.error(`Invalid file type: ${file.mimetype}`);
+      return res.status(400).json({ 
+        error: 'Invalid file type', 
+        details: 'Only JPEG, PNG, and GIF images are allowed' 
+      });
+    }
+
+    // Validate file size (optional, e.g., max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      console.error(`File too large: ${file.size} bytes`);
+      return res.status(400).json({ 
+        error: 'File too large', 
+        details: 'Maximum file size is 5MB' 
+      });
+    }
+
+    // Generate a unique filename
+    const filename = `quotes/${bookId}/${Date.now()}_${file.originalname}`;
     const fileUpload = bucket.file(filename);
 
+    // Create a write stream
     const blobStream = fileUpload.createWriteStream({
       metadata: {
         contentType: file.mimetype
@@ -191,67 +237,116 @@ app.post('/books/:bookId/quotes', upload.single('quote'), async (req, res) => {
     });
 
     blobStream.on('error', (err) => {
-      res.status(500).json({ error: err.message });
+      console.error('File upload to storage error:', err);
+      res.status(500).json({ 
+        error: 'File upload failed', 
+        details: err.message 
+      });
     });
 
     blobStream.on('finish', async () => {
-      await fileUpload.makePublic();
-      const publicUrl = fileUpload.publicUrl();
+      try {
+        // Make the file publicly accessible
+        await fileUpload.makePublic();
 
-      await db.collection('books').doc(bookId).update({
-        excerpts: db.FieldValue.arrayUnion(publicUrl)
-      });
+        // Construct the public URL
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
+        console.log(`Generated public URL: ${publicUrl}`);
 
-      res.json({ url: publicUrl });
+        // Fetch the current book document
+        const bookDoc = await db.collection('books').doc(bookId).get();
+        const bookData = bookDoc.data();
+
+        console.log(`Book data before update: ${JSON.stringify(bookData)}`);
+
+        // Ensure excerpts array exists
+        const currentExcerpts = bookData.excerpts || [];
+
+        // Add the new quote URL to excerpts
+        const updatedExcerpts = [...currentExcerpts, publicUrl];
+
+        // Update the book document with the new excerpts
+        await db.collection('books').doc(bookId).update({
+          excerpts: updatedExcerpts
+        });
+
+        console.log(`Updated excerpts for book ${bookId}: ${JSON.stringify(updatedExcerpts)}`);
+
+        // Respond with success and the new quote URL
+        res.status(201).json({ 
+          message: 'Quote uploaded successfully', 
+          quoteUrl: publicUrl,
+          totalQuotes: updatedExcerpts.length
+        });
+      } catch (updateError) {
+        console.error('Error updating book document:', updateError);
+        res.status(500).json({ 
+          error: 'Failed to update book quotes', 
+          details: updateError.message 
+        });
+      }
     });
 
+    // Write the file
     blobStream.end(file.buffer);
+  } catch (error) {
+    console.error('Unexpected quote upload error:', error);
+    res.status(500).json({ 
+      error: 'Unexpected error during quote upload', 
+      details: error.message 
+    });
+  }
+});
+
+app.put('/books/:bookId/quotes/:quoteIndex/tags', async (req, res) => {
+  try {
+    const { bookId, quoteIndex } = req.params;
+    const { tags } = req.body;
+    
+    if (!Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Tags must be an array' });
+    }
+    
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+    
+    if (!bookData.quotes || bookData.quotes.length <= quoteIndex) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+    
+    // Update tags for specific quote
+    bookData.quotes[quoteIndex].tags = tags;
+    
+    await db.collection('books').doc(bookId).update({
+      quotes: bookData.quotes
+    });
+    
+    res.json({ 
+      message: 'Quote tags updated successfully',
+      quote: bookData.quotes[quoteIndex]
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/books/:bookId/quotes', upload.single('quote'), async (req, res) => {
+app.get('/books/quotes/tags', async (req, res) => {
   try {
-    const bookId = req.params.bookId;
+    const booksSnapshot = await db.collection('books').get();
+    const allTags = new Set();
     
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-    
-    const filename = `quotes/${bookId}/${Date.now()}_${req.file.originalname}`;
-    const fileRef = bucket.file(filename);
-    
-    const stream = fileRef.createWriteStream({
-      metadata: {
-        contentType: req.file.mimetype
+    booksSnapshot.docs.forEach(doc => {
+      const bookData = doc.data();
+      if (bookData.quotes) {
+        bookData.quotes.forEach(quote => {
+          if (quote.tags) {
+            quote.tags.forEach(tag => allTags.add(tag));
+          }
+        });
       }
     });
     
-    stream.on('error', (err) => {
-      console.error(err);
-      res.status(500).json({ error: 'Upload failed' });
-    });
-    
-    stream.on('finish', async () => {
-      await fileRef.makePublic();
-      const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;
-      
-      const bookDoc = await db.collection('books').doc(bookId).get();
-      const bookData = bookDoc.data();
-      const updatedExcerpts = [...(bookData.excerpts || []), publicUrl];
-      
-      await db.collection('books').doc(bookId).update({
-        excerpts: updatedExcerpts
-      });
-      
-      res.json({ 
-        message: 'Quote uploaded successfully', 
-        quoteUrl: publicUrl 
-      });
-    });
-    
-    stream.end(req.file.buffer);
+    res.json({ tags: Array.from(allTags) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -273,10 +368,10 @@ app.delete('/books/:bookId/quotes', async (req, res) => {
     
     const bookDoc = await db.collection('books').doc(bookId).get();
     const bookData = bookDoc.data();
-    const updatedExcerpts = (bookData.excerpts || []).filter(url => url !== quoteUrl);
+    const updatedQuotes = (bookData.quotes || []).filter(quote => quote.url !== quoteUrl);
     
     await db.collection('books').doc(bookId).update({
-      excerpts: updatedExcerpts
+      quotes: updatedQuotes
     });
     
     res.json({ message: 'Quote deleted successfully' });
@@ -378,6 +473,276 @@ app.get('/books/list-ids', async (req, res) => {
       error: 'Kitap kimlikleri listelenemedi', 
       details: error.message 
     });
+  }
+});
+
+// Mobile App Routes for Quote Tag Management
+app.post('/mobile/books/:bookId/quotes/:quoteIndex/tags', async (req, res) => {
+  try {
+    const { bookId, quoteIndex } = req.params;
+    const { tags } = req.body;
+    
+    if (!Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Tags must be an array of strings' });
+    }
+    
+    // Validate tags (optional: add more strict validation if needed)
+    const sanitizedTags = tags
+      .map(tag => tag.trim())
+      .filter(tag => tag.length > 0)
+      .slice(0, 10); // Limit to 10 tags
+    
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+    
+    if (!bookData.quotes || bookData.quotes.length <= quoteIndex) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+    
+    // Update tags for specific quote
+    bookData.quotes[quoteIndex].tags = sanitizedTags;
+    
+    await db.collection('books').doc(bookId).update({
+      quotes: bookData.quotes
+    });
+    
+    res.json({ 
+      message: 'Quote tags updated successfully',
+      quote: bookData.quotes[quoteIndex]
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/mobile/books/quotes/filter', async (req, res) => {
+  try {
+    const { tags } = req.query;
+    const tagArray = tags ? tags.split(',').map(tag => tag.trim()) : [];
+    
+    const booksSnapshot = await db.collection('books').get();
+    const filteredBooks = [];
+    
+    booksSnapshot.docs.forEach(doc => {
+      const bookData = doc.data();
+      if (bookData.quotes) {
+        const matchingQuotes = bookData.quotes.filter(quote => 
+          tagArray.length === 0 || 
+          tagArray.some(tag => quote.tags && quote.tags.includes(tag))
+        );
+        
+        if (matchingQuotes.length > 0) {
+          filteredBooks.push({
+            id: doc.id,
+            bookName: bookData.bookName,
+            authorName: bookData.authorName,
+            quotes: matchingQuotes
+          });
+        }
+      }
+    });
+    
+    res.json({
+      books: filteredBooks,
+      totalMatchingQuotes: filteredBooks.reduce((total, book) => total + book.quotes.length, 0)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/mobile/books/:bookId/quotes/tags', async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+    
+    if (!bookData || !bookData.quotes) {
+      return res.json({ tags: [] });
+    }
+    
+    // Collect unique tags from book quotes
+    const allTags = new Set();
+    bookData.quotes.forEach(quote => {
+      if (quote.tags) {
+        quote.tags.forEach(tag => allTags.add(tag));
+      }
+    });
+    
+    res.json({ 
+      tags: Array.from(allTags),
+      totalQuotes: bookData.quotes.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route to retrieve all quotes for a book
+app.get('/books/:bookId/quotes', async (req, res) => {
+  try {
+    const { bookId } = req.params;
+    const { 
+      sortBy = 'uploadedAt', 
+      sortOrder = 'desc', 
+      limit = 100 
+    } = req.query;
+
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+
+    if (!bookData || !bookData.quotes) {
+      return res.json({ 
+        quotes: [], 
+        totalQuotes: 0,
+        bookName: bookData?.bookName || 'Unknown Book'
+      });
+    }
+
+    // Sort quotes
+    const sortedQuotes = [...bookData.quotes].sort((a, b) => {
+      const valueA = a[sortBy] || '';
+      const valueB = b[sortBy] || '';
+      return sortOrder === 'desc' 
+        ? valueB.localeCompare(valueA) 
+        : valueA.localeCompare(valueB);
+    });
+
+    // Apply limit
+    const limitedQuotes = sortedQuotes.slice(0, Number(limit));
+
+    res.json({
+      quotes: limitedQuotes,
+      totalQuotes: bookData.quotes.length,
+      bookName: bookData.bookName
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route to update a specific quote
+app.put('/books/:bookId/quotes/:quoteIndex', async (req, res) => {
+  try {
+    const { bookId, quoteIndex } = req.params;
+    const updateData = req.body;
+
+    // Validate input
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No update data provided' });
+    }
+
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+
+    if (!bookData.quotes || bookData.quotes.length <= quoteIndex) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+
+    // Allowed fields to update
+    const allowedUpdates = ['tags'];
+    const validUpdates = {};
+
+    allowedUpdates.forEach(field => {
+      if (updateData[field] !== undefined) {
+        validUpdates[field] = updateData[field];
+      }
+    });
+
+    // Update specific quote
+    bookData.quotes[quoteIndex] = {
+      ...bookData.quotes[quoteIndex],
+      ...validUpdates
+    };
+
+    await db.collection('books').doc(bookId).update({
+      quotes: bookData.quotes
+    });
+
+    res.json({ 
+      message: 'Quote updated successfully',
+      quote: bookData.quotes[quoteIndex]
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route to delete a specific quote
+app.delete('/books/:bookId/quotes/:quoteIndex', async (req, res) => {
+  try {
+    const { bookId, quoteIndex } = req.params;
+
+    const bookDoc = await db.collection('books').doc(bookId).get();
+    const bookData = bookDoc.data();
+
+    if (!bookData.quotes || bookData.quotes.length <= quoteIndex) {
+      return res.status(404).json({ error: 'Quote not found' });
+    }
+
+    // Get the quote to be deleted (for potential file deletion)
+    const quoteToDelete = bookData.quotes[quoteIndex];
+
+    // Remove quote from array
+    const updatedQuotes = bookData.quotes.filter((_, index) => index !== Number(quoteIndex));
+
+    // If quote has an image URL, attempt to delete from storage
+    if (quoteToDelete.url) {
+      try {
+        const filename = quoteToDelete.url.replace('https://storage.googleapis.com/kesitokur-app.appspot.com/', '');
+        const fileRef = bucket.file(filename);
+        await fileRef.delete();
+      } catch (storageError) {
+        console.log(`Could not delete quote image: ${quoteToDelete.url}`, storageError);
+      }
+    }
+
+    // Update book document
+    await db.collection('books').doc(bookId).update({
+      quotes: updatedQuotes
+    });
+
+    res.json({ 
+      message: 'Quote deleted successfully',
+      remainingQuotes: updatedQuotes.length
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Route to search for a book by name
+app.get('/books/search', async (req, res) => {
+  try {
+    const { name, exact = false } = req.query;
+    
+    if (!name) {
+      return res.status(400).json({ error: 'Book name is required' });
+    }
+
+    const booksRef = db.collection('books');
+    const snapshot = await booksRef.get();
+
+    // Matching strategy based on 'exact' parameter
+    const matchedBooks = snapshot.docs.filter(doc => {
+      const bookName = doc.data().bookName;
+      return exact 
+        ? bookName === name 
+        : bookName.toLowerCase().includes(name.toLowerCase());
+    });
+
+    if (matchedBooks.length === 0) {
+      return res.status(404).json({ error: 'Book not found' });
+    }
+
+    const bookDoc = matchedBooks[0];
+    res.json({
+      bookId: bookDoc.id,
+      bookName: bookDoc.data().bookName
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

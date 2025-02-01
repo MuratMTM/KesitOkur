@@ -97,122 +97,54 @@ struct BookDetailView: View {
     }
     
     private func fetchQuotes() {
-        // Hardcoded mapping for now - you might want to make this more dynamic
-        let quoteDirectoryMap: [String: String] = [
-            "Ustalık": "15",
-            // Add more mappings as needed
-        ]
-        
-        // Try multiple potential base paths
-        let potentialBasePaths = [
-            "/Users/muratisik/Desktop/KesitOkur(App)/KesitOkur/KesitOkur/KesitOkur/KesitOkur/quotes",
-            Bundle.main.resourcePath ?? "",
-            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.path ?? "",
-            "/Users/muratisik/Desktop/KesitOkur(App)/KesitOkur/KesitOkur/KesitOkur/KesitOkur"
-        ]
-        
-        // Debug: Print out all potential paths and book details
-        print("🔍 Searching for quotes for book: \(book.bookName)")
-        print("🔍 Book ID: \(book.id)")
-        print("🔍 Potential base paths: \(potentialBasePaths)")
-        print("🔍 Quote directory mapping: \(quoteDirectoryMap)")
-        
-        var quotesPath: String?
-        
-        // Find the first valid quote directory
-        for basePath in potentialBasePaths {
-            print("🔎 Checking base path: \(basePath)")
-            
-            // Try multiple directory finding strategies
-            let strategies = [
-                // Strategy 1: Use book name mapping
-                { () -> String? in
-                    guard let bookQuoteDirectory = quoteDirectoryMap[book.bookName] else {
-                        print("❌ No quote directory mapping found for book name: \(book.bookName)")
-                        return nil
-                    }
-                    let fullPath = (basePath as NSString).appendingPathComponent(bookQuoteDirectory)
-                    return FileManager.default.fileExists(atPath: fullPath) ? fullPath : nil
-                },
-                
-                // Strategy 2: Use book ID
-                { () -> String? in
-                    let fullPath = (basePath as NSString).appendingPathComponent(book.id)
-                    return FileManager.default.fileExists(atPath: fullPath) ? fullPath : nil
-                },
-                
-                // Strategy 3: Try all numeric subdirectories
-                { () -> String? in
-                    do {
-                        let contents = try FileManager.default.contentsOfDirectory(atPath: basePath)
-                        let numericDirs = contents.filter { 
-                            let path = (basePath as NSString).appendingPathComponent($0)
-                            var isDirectory: ObjCBool = false
-                            FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory)
-                            return isDirectory.boolValue && CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: $0))
-                        }
-                        
-                        // Try the first numeric directory
-                        if let firstNumericDir = numericDirs.first {
-                            let fullPath = (basePath as NSString).appendingPathComponent(firstNumericDir)
-                            return FileManager.default.fileExists(atPath: fullPath) ? fullPath : nil
-                        }
-                    } catch {
-                        print("❌ Error listing directory contents: \(error)")
-                    }
-                    return nil
-                }
-            ]
-            
-            // Try each strategy
-            for (index, strategy) in strategies.enumerated() {
-                if let foundPath = strategy() {
-                    quotesPath = foundPath
-                    print("✅ Found quotes path using strategy \(index + 1): \(foundPath)")
-                    break
-                }
-            }
-            
-            if quotesPath != nil {
-                break
-            }
-        }
-        
-        guard let quotesPath = quotesPath else {
-            print("❌ Could not find quotes directory for book: \(book.bookName)")
-            print("❌ Book details: \(book)")
+        // Fetch quotes from Firestore instead of local directories
+        guard let url = URL(string: "http://localhost:3000/books/\(book.id)/quotes") else {
+            print("❌ Invalid URL for quotes")
             return
         }
         
-        do {
-            let fileManager = FileManager.default
-            let quotesDirectory = URL(fileURLWithPath: quotesPath)
-            let quoteFiles = try fileManager.contentsOfDirectory(
-                at: quotesDirectory, 
-                includingPropertiesForKeys: nil
-            )
-            
-            quotes = quoteFiles.compactMap { fileURL in
-                // Filter for image files
-                guard fileURL.pathExtension.lowercased() == "jpg" || 
-                      fileURL.pathExtension.lowercased() == "jpeg" ||
-                      fileURL.pathExtension.lowercased() == "png" else {
-                    return nil
-                }
-                
-                return Quote(
-                    url: fileURL.path,
-                    text: "Quote from \(book.bookName)", // You might want to add text extraction logic
-                    isFavorite: false
-                )
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("❌ Error fetching quotes: \(error.localizedDescription)")
+                return
             }
             
-            print("✅ Found \(quotes.count) quotes for \(book.bookName) in \(quotesPath)")
-            print("✅ Quote files: \(quotes.map { $0.url })")
-        } catch {
-            print("❌ Error fetching quotes for \(book.bookName): \(error)")
-            quotes = []
-        }
+            guard let data = data else {
+                print("❌ No quote data received")
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let quotesResponse = try decoder.decode(QuotesResponse.self, from: data)
+                
+                DispatchQueue.main.async {
+                    self.quotes = quotesResponse.quotes.map { quoteData in
+                        Quote(
+                            id: UUID().uuidString,
+                            url: quoteData.url,
+                            text: "", // You might want to add text if available
+                            author: nil,
+                            isFavorite: false
+                        )
+                    }
+                }
+            } catch {
+                print("❌ Error decoding quotes: \(error.localizedDescription)")
+            }
+        }.resume()
+    }
+    
+    struct QuotesResponse: Codable {
+        let quotes: [QuoteData]
+        let totalQuotes: Int
+        let bookName: String
+    }
+    
+    struct QuoteData: Codable {
+        let url: String
+        let uploadedAt: String?
+        let tags: [String]?
     }
 }
 

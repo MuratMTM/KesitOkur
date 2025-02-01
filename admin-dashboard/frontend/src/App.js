@@ -33,7 +33,7 @@ function App() {
   const fetchBooks = async () => {
     try {
       const response = await axios.get('http://localhost:3000/books');
-      setBooks(response.data);
+      setBooks(response.data.books);
     } catch (error) {
       console.error('Error fetching books:', error);
       showNotification('Failed to fetch books', 'error');
@@ -190,22 +190,74 @@ function App() {
 
   const handleQuoteUpload = async (bookId, event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      showNotification('Please select a file to upload', 'error');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      console.error(`Invalid file type: ${file.type}`);
+      showNotification('Only JPEG, PNG, and GIF images are allowed', 'error');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      console.error(`File too large: ${file.size} bytes`);
+      showNotification('File is too large. Maximum size is 5MB', 'error');
+      return;
+    }
+
+    console.log(`Attempting to upload quote for book ID: ${bookId}`);
+    console.log(`File details: ${JSON.stringify({
+      name: file.name,
+      type: file.type,
+      size: file.size
+    })}`);
 
     const formData = new FormData();
     formData.append('quote', file);
 
     try {
-      await axios.post(`http://localhost:3000/books/${bookId}/quotes`, formData, {
+      const response = await axios.post(`http://localhost:3000/books/${bookId}/quotes`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        // Add timeout to catch potential network issues
+        timeout: 30000 // 30 seconds
       });
-      fetchBooks();
+      
+      console.log('Quote upload response:', response.data);
+      
+      // Refresh books to show the new quote
+      await fetchBooks();
+      
       showNotification('Quote uploaded successfully', 'success');
     } catch (error) {
-      console.error('Error uploading quote:', error);
-      showNotification('Failed to upload quote', 'error');
+      // Detailed error handling
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Quote upload server error:', error.response.data);
+        showNotification(
+          error.response.data.details || 
+          error.response.data.error || 
+          'Failed to upload quote', 
+          'error'
+        );
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        showNotification('No response from server. Please check your connection.', 'error');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Quote upload error:', error.message);
+        showNotification('An unexpected error occurred', 'error');
+      }
     }
   };
 
