@@ -97,42 +97,20 @@ struct BookDetailView: View {
     }
     
     private func fetchQuotes() {
-        // Fetch quotes from Firestore instead of local directories
-        guard let url = URL(string: "http://localhost:3000/books/\(book.id)/quotes") else {
-            print("❌ Invalid URL for quotes")
-            return
+        // Use the excerpts directly from the book model
+        if !book.excerpts.isEmpty {
+            self.quotes = book.excerpts.map { excerptUrl in
+                Quote(
+                    id: UUID().uuidString,
+                    url: excerptUrl,
+                    text: "", // You might want to add text if available
+                    author: nil,
+                    isFavorite: false
+                )
+            }
+        } else {
+            print("No quotes found for book: \(book.bookName)")
         }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                print("❌ Error fetching quotes: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let data = data else {
-                print("❌ No quote data received")
-                return
-            }
-            
-            do {
-                let decoder = JSONDecoder()
-                let quotesResponse = try decoder.decode(QuotesResponse.self, from: data)
-                
-                DispatchQueue.main.async {
-                    self.quotes = quotesResponse.quotes.map { quoteData in
-                        Quote(
-                            id: UUID().uuidString,
-                            url: quoteData.url,
-                            text: "", // You might want to add text if available
-                            author: nil,
-                            isFavorite: false
-                        )
-                    }
-                }
-            } catch {
-                print("❌ Error decoding quotes: \(error.localizedDescription)")
-            }
-        }.resume()
     }
     
     struct QuotesResponse: Codable {
