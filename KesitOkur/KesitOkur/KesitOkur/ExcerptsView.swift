@@ -2,14 +2,30 @@ import SwiftUI
 import Combine
 import FirebaseStorage
 
+// Add a simple image cache to reduce redundant network requests
+class ImageCache {
+    static let shared = ImageCache()
+    private let cache = NSCache<NSURL, UIImage>()
+    
+    func image(for url: URL) -> UIImage? {
+        return cache.object(forKey: url as NSURL)
+    }
+    
+    func cache(image: UIImage, for url: URL) {
+        cache.setObject(image, forKey: url as NSURL)
+    }
+}
+
 struct ExcerptsView: View {
     let book: Book
     @Environment(\.presentationMode) var presentationMode
     @State private var currentIndex = 0
-    @State private var validExcerpts: [String] = []
     @State private var excerptImages: [UIImage] = []
     @State private var isLoading = true
     @State private var loadingError: Error?
+    
+    // Limit concurrent image downloads to prevent overwhelming the network
+    private let imageDownloadQueue = DispatchQueue(label: "com.kesitokur.imageDownloadQueue", attributes: .concurrent)
     
     var body: some View {
         ZStack {
@@ -67,19 +83,22 @@ struct ExcerptsView: View {
         loadingError = nil
         excerptImages = []
         
-        // Fetch image URLs for the book
         fetchExcerptImageURLs { urls in
-            // Download images concurrently
+            // Use a concurrent queue for image downloads
             let group = DispatchGroup()
             var downloadedImages: [UIImage] = []
             
             for url in urls {
                 group.enter()
-                downloadImage(from: url) { image in
-                    if let image = image {
-                        downloadedImages.append(image)
+                imageDownloadQueue.async {
+                    self.downloadImage(from: url) { image in
+                        if let image = image {
+                            DispatchQueue.main.async {
+                                downloadedImages.append(image)
+                            }
+                        }
+                        group.leave()
                     }
-                    group.leave()
                 }
             }
             
@@ -99,30 +118,26 @@ struct ExcerptsView: View {
         let bookQuotesRef = storage.reference().child("quotes/\(book.id)")
         
         bookQuotesRef.listAll { result, error in
-            // Handle potential errors first
             if let error = error {
                 print("🔥 Kitap alıntı resimleri listelenemedi: \(error.localizedDescription)")
                 completion([])
                 return
             }
             
-            // Safely unwrap result
             guard let result = result else {
                 print("❌ No storage list result returned")
                 completion([])
                 return
             }
             
-            // Fetch download URLs for all items
-            let urlFetchGroup = DispatchGroup()
-            var imageUrls: [URL] = []
-            
-            // Check if there are any items before processing
             guard !result.items.isEmpty else {
                 print("ℹ️ No image items found for book: \(self.book.bookName)")
                 completion([])
                 return
             }
+            
+            let urlFetchGroup = DispatchGroup()
+            var imageUrls: [URL] = []
             
             for item in result.items {
                 urlFetchGroup.enter()
@@ -144,6 +159,12 @@ struct ExcerptsView: View {
     }
     
     private func downloadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+        // Check image cache first
+        if let cachedImage = ImageCache.shared.image(for: url) {
+            completion(cachedImage)
+            return
+        }
+        
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
                 print("🔴 Resim indirme hatası: \(error.localizedDescription)")
@@ -156,6 +177,9 @@ struct ExcerptsView: View {
                 completion(nil)
                 return
             }
+            
+            // Cache the downloaded image
+            ImageCache.shared.cache(image: image, for: url)
             
             completion(image)
         }.resume()
