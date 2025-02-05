@@ -24,23 +24,40 @@ class FavoritesManager: ObservableObject {
     
     // MARK: - Book Favorites
     
+    func toggleFavoriteBook(book: Book) {
+        if favoriteBooks.contains(book) {
+            removeBookFromFavorites(book)
+        } else {
+            addBookToFavorites(book)
+        }
+        objectWillChange.send()  // Force UI update
+    }
+    
     func addBookToFavorites(_ book: Book) {
         guard let userId = auth.currentUser?.uid else { return }
+        
+        // Update local state immediately for better UI responsiveness
+        DispatchQueue.main.async {
+            self.favoriteBooks.insert(book)
+            self.objectWillChange.send()  // Force UI update
+        }
         
         let bookData: [String: Any] = [
             "id": book.id,
             "bookName": book.bookName,
             "authorName": book.authorName,
             "bookCover": book.bookCover,
-            "description": book.description
+            "description": book.description,
+            "timestamp": FieldValue.serverTimestamp()  // Add timestamp for sorting
         ]
         
         db.collection("users").document(userId).collection("favoriteBooks").document(book.id).setData(bookData) { error in
             if let error = error {
                 print("Error adding book to favorites: \(error)")
-            } else {
+                // Revert local state if server update fails
                 DispatchQueue.main.async {
-                    self.favoriteBooks.insert(book)
+                    self.favoriteBooks.remove(book)
+                    self.objectWillChange.send()  // Force UI update
                 }
             }
         }
@@ -49,12 +66,19 @@ class FavoritesManager: ObservableObject {
     func removeBookFromFavorites(_ book: Book) {
         guard let userId = auth.currentUser?.uid else { return }
         
+        // Update local state immediately for better UI responsiveness
+        DispatchQueue.main.async {
+            self.favoriteBooks.remove(book)
+            self.objectWillChange.send()  // Force UI update
+        }
+        
         db.collection("users").document(userId).collection("favoriteBooks").document(book.id).delete { error in
             if let error = error {
                 print("Error removing book from favorites: \(error)")
-            } else {
+                // Revert local state if server update fails
                 DispatchQueue.main.async {
-                    self.favoriteBooks.remove(book)
+                    self.favoriteBooks.insert(book)
+                    self.objectWillChange.send()  // Force UI update
                 }
             }
         }
@@ -63,26 +87,34 @@ class FavoritesManager: ObservableObject {
     private func fetchFavoriteBooks() {
         guard let userId = auth.currentUser?.uid else { return }
         
-        db.collection("users").document(userId).collection("favoriteBooks").addSnapshotListener { snapshot, error in
-            guard let documents = snapshot?.documents else {
-                print("Error fetching favorite books: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-            
-            self.favoriteBooks = Set(documents.compactMap { doc -> Book? in
-                let data = doc.data()
-                return Book(
-                    id: data["id"] as? String ?? "",
-                    bookCover: data["bookCover"] as? String ?? "",
-                    bookName: data["bookName"] as? String ?? "",
-                    authorName: data["authorName"] as? String ?? "",
-                    publishYear: "",
-                    edition: "",
-                    pages: "",
-                    description: data["description"] as? String ?? "",
-                    excerpts: []
-                )
-            })
+        // Use real-time listener
+        db.collection("users").document(userId).collection("favoriteBooks")
+            .order(by: "timestamp", descending: true)  // Sort by timestamp
+            .addSnapshotListener { [weak self] snapshot, error in
+                guard let self = self else { return }
+                
+                guard let documents = snapshot?.documents else {
+                    print("Error fetching favorite books: \(error?.localizedDescription ?? "Unknown error")")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.favoriteBooks = Set(documents.compactMap { doc -> Book? in
+                        let data = doc.data()
+                        return Book(
+                            id: data["id"] as? String ?? "",
+                            bookCover: data["bookCover"] as? String ?? "",
+                            bookName: data["bookName"] as? String ?? "",
+                            authorName: data["authorName"] as? String ?? "",
+                            publishYear: "",
+                            edition: "",
+                            pages: "",
+                            description: data["description"] as? String ?? "",
+                            excerpts: []
+                        )
+                    })
+                    self.objectWillChange.send()  // Force UI update
+                }
         }
     }
     
@@ -145,14 +177,6 @@ class FavoritesManager: ObservableObject {
                     isFavorite: true
                 )
             })
-        }
-    }
-    
-    func toggleFavoriteBook(book: Book) {
-        if favoriteBooks.contains(book) {
-            removeBookFromFavorites(book)
-        } else {
-            addBookToFavorites(book)
         }
     }
     

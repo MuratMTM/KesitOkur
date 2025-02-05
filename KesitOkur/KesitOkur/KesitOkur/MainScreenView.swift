@@ -197,14 +197,22 @@ struct BookInfoView: View {
 struct FavoriteButton: View {
     let book: Book
     @EnvironmentObject private var favoritesManager: FavoritesManager
+    
+    private var isFavorite: Bool {
+        favoritesManager.favoriteBooks.contains(book)
+    }
+    
     var body: some View {
         Button(action: {
-            favoritesManager.toggleFavoriteBook(book: book)
+            withAnimation {
+                favoritesManager.toggleFavoriteBook(book: book)
+            }
         }) {
-            Image(systemName: favoritesManager.favoriteBooks.contains(book) ? "heart.fill" : "heart")
-                .foregroundColor(favoritesManager.favoriteBooks.contains(book) ? .red : .black)
+            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                .foregroundColor(isFavorite ? .red : .black)
                 .padding(.trailing, 10)
         }
+        .buttonStyle(BorderlessButtonStyle()) // Prevent navigation link interference
     }
 }
 

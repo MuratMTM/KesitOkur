@@ -35,31 +35,16 @@ struct BookDetailView: View {
                     Text(book.bookName)
                         .font(.title)
                         .fontWeight(.bold)
+                        .foregroundColor(.black)
                     
                     Text(book.authorName)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(.gray)
                     
                     Text(book.description)
                         .font(.body)
+                        .foregroundColor(.black)
                         .padding()
-                    
-                    // Quotes Button
-                    Button(action: {
-                        showQuotes = true
-                    }) {
-                        HStack {
-                            Image(systemName: "text.quote")
-                            Text("Alıntılar")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(10)
-                    }
-                    .padding(.horizontal)
-                    .opacity(quotes.isEmpty ? 0.3 : 1.0)
-                    .disabled(quotes.isEmpty)
                     
                     // Add Excerpts Button
                     if !book.excerpts.isEmpty {

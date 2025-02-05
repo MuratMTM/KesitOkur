@@ -39,32 +39,37 @@ struct SearchView: View {
             VStack {
                 // Search Bar
                 HStack {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
-                        
-                        TextField("Kitap veya yazar ara...", text: $searchText)
-                            .foregroundColor(.black)
-                            .textFieldStyle(CustomTextFieldStyle())
-                            .textInputAutocapitalization(.never)
-                    }
-                    .padding(.horizontal)
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.black)
                     
-                    if isSearching {
+                    ZStack(alignment: .leading) {
+                        if searchText.isEmpty {
+                            Text("Kitap veya yazar ara...")
+                                .foregroundColor(.gray)
+                        }
+                        TextField("", text: $searchText)
+                            .foregroundColor(.black)
+                    }
+                    
+                    if !searchText.isEmpty {
                         Button(action: {
                             searchText = ""
                             isSearching = false
                             UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                                          to: nil, from: nil, for: nil)
                         }) {
-                            Text("İptal")
-                                .foregroundColor(.blue)
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.gray)
                         }
-                        .padding(.trailing)
-                        .transition(.move(edge: .trailing))
-                        .animation(.default, value: isSearching)
                     }
                 }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.white)
+                        .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
+                )
+                .padding()
                 
                 if filteredBooks.isEmpty {
                     EmptySearchView(searchText: searchText)
@@ -88,39 +93,6 @@ struct SearchView: View {
     }
 }
 
-// Custom SearchBar view
-struct SearchBar: View {
-    @Binding var text: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: "magnifyingglass")
-                .foregroundColor(.black)
-                .shadow(color: .black.opacity(0.3), radius: 1)
-            
-            TextField("Kitap veya yazar ara...", text: $text)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .foregroundColor(.black)
-                .accentColor(.black)
-                .shadow(color: .black.opacity(0.2), radius: 2)
-                .tint(.black)
-            
-            if !text.isEmpty {
-                Button(action: { text = "" }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.black)
-                        .shadow(color: .black.opacity(0.3), radius: 1)
-                }
-            }
-        }
-        .padding()
-        .background(Color.white.opacity(0.9))
-        .cornerRadius(10)
-        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-        .padding(.horizontal)
-    }
-}
-
 // Empty search results view
 struct EmptySearchView: View {
     let searchText: String
@@ -131,19 +103,23 @@ struct EmptySearchView: View {
                 .resizable()
                 .scaledToFit()
                 .frame(width: 60, height: 60)
-                .foregroundColor(.customText)
+                .foregroundColor(.gray)
             
             Group {
                 if searchText.isEmpty {
-                    Text("Kitap veya yazar aramak için yazın")
+                    Text("Aramak istediğiniz kitap veya yazarı yazın")
                 } else {
                     Text("'\(searchText)' için sonuç bulunamadı")
                 }
             }
-            .font(.title2)
-            .foregroundColor(.customText)
+            .foregroundColor(.gray)
             .multilineTextAlignment(.center)
             .padding(.horizontal)
         }
+        .padding(.top, 50)
     }
+}
+
+#Preview {
+    SearchView(viewModel: BooksViewModel())
 }
