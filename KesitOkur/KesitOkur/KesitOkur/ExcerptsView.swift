@@ -84,17 +84,18 @@ struct ExcerptsView: View {
         excerptImages = []
         
         fetchExcerptImageURLs { urls in
-            // Use a concurrent queue for image downloads
+            // Create a fixed-size array to maintain order
+            var downloadedImages = Array<UIImage?>(repeating: nil, count: urls.count)
             let group = DispatchGroup()
-            var downloadedImages: [UIImage] = []
             
-            for url in urls {
+            // Download images while maintaining their order
+            for (index, url) in urls.enumerated() {
                 group.enter()
                 imageDownloadQueue.async {
                     self.downloadImage(from: url) { image in
                         if let image = image {
                             DispatchQueue.main.async {
-                                downloadedImages.append(image)
+                                downloadedImages[index] = image
                             }
                         }
                         group.leave()
@@ -103,10 +104,11 @@ struct ExcerptsView: View {
             }
             
             group.notify(queue: .main) {
-                self.excerptImages = downloadedImages
+                // Filter out any nil images while maintaining order
+                self.excerptImages = downloadedImages.compactMap { $0 }
                 self.isLoading = false
                 
-                if downloadedImages.isEmpty {
+                if self.excerptImages.isEmpty {
                     self.loadingError = NSError(domain: "ImageLoadingError", code: 404, userInfo: [NSLocalizedDescriptionKey: "Hiçbir resim yüklenemedi"])
                 }
             }
@@ -136,14 +138,22 @@ struct ExcerptsView: View {
                 return
             }
             
-            let urlFetchGroup = DispatchGroup()
-            var imageUrls: [URL] = []
+            // Sort items by name to maintain consistent order
+            let sortedItems = result.items.sorted { item1, item2 in
+                let name1 = item1.name.components(separatedBy: "/").last ?? ""
+                let name2 = item2.name.components(separatedBy: "/").last ?? ""
+                return name1.localizedStandardCompare(name2) == .orderedAscending
+            }
             
-            for item in result.items {
+            let urlFetchGroup = DispatchGroup()
+            var imageUrlsDict: [String: URL] = [:] // Store URLs with their filenames as keys
+            
+            for item in sortedItems {
                 urlFetchGroup.enter()
                 item.downloadURL { url, error in
                     if let url = url {
-                        imageUrls.append(url)
+                        let filename = item.name.components(separatedBy: "/").last ?? ""
+                        imageUrlsDict[filename] = url
                     } else if let error = error {
                         print("🚫 Error fetching download URL: \(error.localizedDescription)")
                     }
@@ -152,8 +162,12 @@ struct ExcerptsView: View {
             }
             
             urlFetchGroup.notify(queue: .main) {
-                print("📸 Bulunan resim URL'leri: \(imageUrls.count)")
-                completion(imageUrls)
+                // Sort URLs by filename to maintain order
+                let sortedUrls = imageUrlsDict.sorted { $0.key.localizedStandardCompare($1.key) == .orderedAscending }
+                    .map { $0.value }
+                
+                print("📸 Bulunan resim URL'leri: \(sortedUrls.count)")
+                completion(sortedUrls)
             }
         }
     }
