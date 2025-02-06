@@ -15,7 +15,7 @@ const bucket = admin.storage().bucket();
 
 // Book configurations
 const books = [
-  {
+  /* {
     id: "31",
     sourcePath: "/Users/muratisik/Desktop/KesitOkurr/Sapiens",
     name: "Sapiens"
@@ -24,6 +24,11 @@ const books = [
     id: "32",
     sourcePath: "/Users/muratisik/Desktop/KesitOkurr/Steve Jobs",
     name: "Steve Jobs"
+  }, */
+  {
+    id: "6",
+    sourcePath: "/Users/muratisik/Desktop/KesitOkurr/Irade Terbiyesi",
+    name: "Irade Terbiyesi"
   }
 ];
 
@@ -52,20 +57,32 @@ async function uploadQuoteImages(book) {
           }
         });
 
-        // Get the public URL for the uploaded file
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${destination}`;
-        quoteUrls.push(publicUrl);
+        // Get public URL
+        const [url] = await bucket.file(destination).getSignedUrl({
+          version: 'v4',
+          action: 'read',
+          expires: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
+        });
 
         console.log(`✓ Uploaded: ${file}`);
-      } catch (error) {
-        console.error(`Error uploading ${file}:`, error);
+        quoteUrls.push(url);
+      } catch (uploadError) {
+        console.error(`Error uploading quote image:`, uploadError);
       }
     }
 
-    return quoteUrls;
+    if (quoteUrls.length > 0) {
+      // Update Firestore with quote URLs
+      await db.collection("books").doc(book.id).update({
+        excerpts: admin.firestore.FieldValue.arrayUnion(...quoteUrls),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      console.log(`✓ Successfully uploaded ${quoteUrls.length} quotes for "${book.name}"`);
+      console.log(`Total quotes for book: ${quoteUrls.length}`);
+    }
   } catch (error) {
-    console.error(`Error processing quotes for ${book.name}:`, error);
-    return [];
+    console.error(`Error processing quotes for book ${book.name}:`, error);
   }
 }
 
@@ -76,21 +93,7 @@ async function uploadQuotes() {
     
     try {
       // Upload and process quotes
-      const quoteUrls = await uploadQuoteImages(book);
-      
-      if (quoteUrls.length > 0) {
-        // Update book document with new quotes
-        const bookRef = db.collection("books").doc(book.id);
-        
-        // Update Firestore with quotes array and timestamp
-        await bookRef.update({
-          excerpts: quoteUrls,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-
-        console.log(`✓ Successfully uploaded ${quoteUrls.length} quotes for "${book.name}"`);
-        console.log(`Total quotes for book: ${quoteUrls.length}`);
-      }
+      await uploadQuoteImages(book);
     } catch (error) {
       console.error(`Error processing book ${book.name}:`, error);
     }

@@ -28,6 +28,8 @@ class BooksViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.books = documents.compactMap { doc -> Book? in
                     let data = doc.data()
+                    // Check both 'quotes' and 'excerpts' fields
+                    let quotesArray = (data["quotes"] as? [String]) ?? (data["excerpts"] as? [String]) ?? []
                     return Book(
                         id: doc.documentID,
                         bookCover: data["bookCover"] as? String ?? "",
@@ -37,7 +39,7 @@ class BooksViewModel: ObservableObject {
                         edition: data["edition"] as? String ?? "",
                         pages: data["pages"] as? String ?? "",
                         description: data["description"] as? String ?? "",
-                        excerpts: data["excerpts"] as? [String] ?? []
+                        excerpts: quotesArray
                     )
                 }
             }
