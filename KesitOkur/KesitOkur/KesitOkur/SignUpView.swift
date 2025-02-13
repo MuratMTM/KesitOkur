@@ -63,7 +63,7 @@ struct SignUpView: View {
                                     .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
                                 
-                                SecureField("Şifreyi Tekrarla", text: $confirmPassword)
+                                SecureField("Şifrenizi Doğrulayın", text: $confirmPassword)
                                     .textFieldStyle(CustomTextFieldStyle())
                                     .foregroundColor(.black)
                                     .frame(width: geometry.size.width * 0.8)
@@ -98,7 +98,7 @@ struct SignUpView: View {
                             }
                             .padding(.horizontal)
                             
-                            Button("Zaten hesabın var mı? Giriş yap") {
+                            Button("Zaten hesabın var mı?\nGiriş yap") {
                                 dismiss()
                             }
                             .foregroundColor(.blue)

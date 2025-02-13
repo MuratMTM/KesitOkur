@@ -131,7 +131,8 @@ struct LoginPageView: View {
                 height: min(50, geometry.size.height * 0.06),
                 backgroundColor: .black,
                 foregroundColor: .white,
-                title: "Kayıt Ol"
+                title: "Kayıt Ol",
+                titleFont: .system(size: min(16, geometry.size.width * 0.04), weight: .semibold)
             ) {
                 showingSignUp = true
             }
@@ -146,7 +147,16 @@ struct LoginPageView: View {
     
     // MARK: - Google Sign In Button
     private func googleSignInButton(geometry: GeometryProxy) -> some View {
-        Button(action: {
+        LoginButton(
+            width: min(geometry.size.width * 0.85, 400),
+            height: min(50, geometry.size.height * 0.06),
+            backgroundColor: .white,
+            foregroundColor: .black,
+            title: "Google ile Giriş Yap",
+            titleFont: .system(size: min(16, geometry.size.width * 0.04), weight: .semibold),
+            isLoading: isLoading,
+            icon: "googleLogo"
+        ) {
             Task { @MainActor in
                 do {
                     try await performGoogleSignIn()
@@ -154,22 +164,28 @@ struct LoginPageView: View {
                     showErrorMessage(error.localizedDescription)
                 }
             }
-        }) {
-            HStack {
-                Image("googleLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: min(20, geometry.size.width * 0.05),
-                           height: min(20, geometry.size.width * 0.05))
-                Text("Google ile Devam Et")
-                    .font(.system(size: min(16, geometry.size.width * 0.04), weight: .semibold))
-            }
-            .frame(width: min(geometry.size.width * 0.85, 400),
-                   height: min(50, geometry.size.height * 0.06))
-            .background(Color.white)
-            .foregroundColor(.black)
-            .cornerRadius(10)
-            .shadow(color: .black.opacity(0.1), radius: 3)
+        }
+    }
+    
+    // MARK: - Apple Sign In Button
+    private func appleSignInButton(geometry: GeometryProxy) -> some View {
+        LoginButton(
+            width: min(geometry.size.width * 0.85, 400),
+            height: min(50, geometry.size.height * 0.06),
+            backgroundColor: .black,
+            foregroundColor: .white,
+            title: "Apple ile Giriş Yap",
+            titleFont: .system(size: min(16, geometry.size.width * 0.04), weight: .semibold),
+            isLoading: isLoading,
+            systemIcon: "applelogo"
+        ) {
+            let provider = ASAuthorizationAppleIDProvider()
+            let request = provider.createRequest()
+            request.requestedScopes = [.fullName, .email]
+            
+            let authController = ASAuthorizationController(authorizationRequests: [request])
+            authController.delegate = (authManager as! ASAuthorizationControllerDelegate)
+            authController.performRequests()
         }
     }
     
@@ -185,33 +201,6 @@ struct LoginPageView: View {
                 // No need to explicitly set isAuthenticated, AuthManager handles this
             
         }
-    }
-    
-    // MARK: - Apple Sign In Button
-    private func appleSignInButton(geometry: GeometryProxy) -> some View {
-        SignInWithAppleButton(
-            onRequest: { request in
-                request.requestedScopes = [.fullName, .email]
-            },
-            onCompletion: { result in
-                switch result {
-                case .success(_):
-                    Task { @MainActor in
-                        do {
-                            try await authManager.signInWithApple()
-                        } catch {
-                            showErrorMessage(error.localizedDescription)
-                        }
-                    }
-                case .failure(let error):
-                    showErrorMessage(error.localizedDescription)
-                }
-            }
-        )
-        .frame(width: min(geometry.size.width * 0.85, 400),
-               height: min(geometry.size.height * 0.06, 50),
-               alignment: .center)
-        .cornerRadius(10)
     }
     
     // MARK: - Perform Apple Sign In
@@ -273,16 +262,30 @@ struct LoginButton: View {
     var backgroundColor: Color = Color.yellow.opacity(0.8)
     var foregroundColor: Color = .black
     let title: String
+    var titleFont: Font = .system(size: 16, weight: .semibold)
     var isLoading: Bool = false
+    var icon: String? = nil
+    var systemIcon: String? = nil
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            Group {
+            HStack {
                 if isLoading {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: foregroundColor))
                 } else {
+                    if let iconName = icon {
+                        Image(iconName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: height * 0.4, height: height * 0.4)
+                    } else if let systemIconName = systemIcon {
+                        Image(systemName: systemIconName)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: height * 0.4, height: height * 0.4)
+                    }
                     Text(title)
                 }
             }
@@ -290,7 +293,7 @@ struct LoginButton: View {
             .background(backgroundColor)
             .foregroundColor(foregroundColor)
             .cornerRadius(10)
-            .font(.system(size: min(16, width * 0.04), weight: .semibold))
+            .font(titleFont)
         }
         .disabled(isLoading)
     }

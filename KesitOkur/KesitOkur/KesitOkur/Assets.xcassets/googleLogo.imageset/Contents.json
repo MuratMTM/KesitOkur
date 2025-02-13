@@ -1,7 +1,6 @@
 {
   "images" : [
     {
-      "filename" : "googleLogo.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -10,6 +9,7 @@
       "scale" : "2x"
     },
     {
+      "filename" : "googleLogo-1 Background Removed.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
